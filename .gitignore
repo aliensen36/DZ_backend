@@ -1,0 +1,41 @@
+# Django
+*.log
+*.pot
+*.pyc
+__pycache__/
+local_settings.py
+db.sqlite3
+media/
+
+# Статика (если собирается через collectstatic)
+/static/
+
+# Файлы IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Виртуальное окружение
+venv/
+env/
+*.env
+.env/
+.env.local
+.env.development
+.env.production
+
+# macOS
+.DS_Store
+
+# Миграции (можно исключить, но осторожно!)
+# /migrations/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
