@@ -5,7 +5,8 @@
 __pycache__/
 local_settings.py
 db.sqlite3
-media/
+media/**/*
+!media/
 
 # Статика (если собирается через collectstatic)
 /static/
@@ -28,8 +29,10 @@ env/
 # macOS
 .DS_Store
 
-# Миграции (можно исключить, но осторожно!)
-# /migrations/
+# Миграции
+/migrations/*
+!/migrations/__init__.py
+
 
 # Jupyter Notebook
 .ipynb_checkpoints/
