@@ -40,6 +40,11 @@ python manage.py makemigrations
 python manage.py migrate
 ```
 
+### Суперпользователь
+```bash
+python manage.py createsuperuser_or_promote
+```
+
 ### 🛠️ Технологии
 
 - **Backend**: Python, DRF 
