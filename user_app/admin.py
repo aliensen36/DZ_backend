@@ -7,8 +7,8 @@ User = get_user_model()
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     model = User
-    list_display = ('tg_id', 'username', 'first_name', 'last_name', 'is_staff')
-    search_fields = ('tg_id', 'username', 'first_name', 'last_name')
+    list_display = ('tg_id', 'username', 'first_name', 'is_superuser')
+    search_fields = ('tg_id', 'username')
     ordering = ('tg_id',)
 
     fieldsets = (
