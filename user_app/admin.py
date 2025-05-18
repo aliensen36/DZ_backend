@@ -11,16 +11,14 @@ class UserAdmin(BaseUserAdmin):
     search_fields = ('tg_id', 'username')
     ordering = ('tg_id',)
 
-    fieldsets = (
-        (None, {'fields': ('tg_id', 'username', 'first_name',
-                           'last_name', 'password')}),
-        ('Permissions', {'fields': ('is_staff', 'is_superuser',
-                                    'groups', 'user_permissions')}),
+    fieldsets = None
+    add_fieldsets = None
+
+    fields = (
+        'tg_id', 'username', 'first_name', 'last_name',
+        'is_bot', 'last_activity', 'date_joined',
+        'is_staff', 'is_active', 'is_superuser',
+        'groups', 'user_permissions', 'password',
     )
-    add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': ('tg_id', 'username', 'first_name', 'last_name',
-                       'password1', 'password2', 'is_staff')}
-        ),
-    )
+
+    readonly_fields = ('last_activity', 'date_joined')

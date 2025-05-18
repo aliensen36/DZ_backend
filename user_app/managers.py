@@ -10,7 +10,12 @@ class UserManager(BaseUserManager):
             raise ValueError("The Telegram ID must be set")
 
         user = self.model(tg_id=tg_id, **extra_fields)
-        user.set_password(password)
+
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
+
         user.save(using=self._db)
 
         return user
