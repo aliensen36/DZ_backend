@@ -21,7 +21,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     'localhost',
-    '0.0.0.0',
+    '158.160.25.8',
     '127.0.0.1',
 ] + os.getenv('ALLOWED_HOSTS', '').split()
 
