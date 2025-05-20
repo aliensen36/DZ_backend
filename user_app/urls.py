@@ -9,5 +9,6 @@ router.register(r'users', views.UserViewSet, basename='user')
 
 
 urlpatterns = [
+    path('', views.home, name='home'), # Временная стартовая страница
     path('', include(router.urls)),
 ]

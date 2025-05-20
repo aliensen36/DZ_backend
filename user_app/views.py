@@ -1,10 +1,17 @@
 from rest_framework import viewsets, mixins, status
 from rest_framework.response import Response
 from .serializers import UserSerializer
+from django.shortcuts import render
 from datetime import datetime
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
+
+
+# Временная стартовая страница
+def home(request):
+    return render(request, 'home.html', {})
+
 
 class UserViewSet(viewsets.ViewSet):
     def list(self, request):
