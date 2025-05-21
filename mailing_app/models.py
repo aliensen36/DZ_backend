@@ -1,0 +1,37 @@
+from django.db import models
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+
+class Mailing(models.Model):
+    """Модель для хранения информации о рассылках"""
+    text = models.TextField(verbose_name='Текст сообщения')
+    image = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name='Изображение'
+    )
+    button_url = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name='Ссылка'
+    )
+    type = models.CharField(
+        max_length=20,
+        default='text',
+        verbose_name='Тип рассылки'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+
+    class Meta:
+        verbose_name = 'Рассылка'
+        verbose_name_plural = 'Рассылки'
+
+    def __str__(self):
+        return f"{self.created_at}"

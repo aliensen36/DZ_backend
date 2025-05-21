@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'user_app.apps.UserAppConfig',
+    'mailing_app.apps.MailingAppConfig',
 ]
 
 MIDDLEWARE = [
