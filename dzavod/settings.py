@@ -23,6 +23,8 @@ ALLOWED_HOSTS = [
     'localhost',
     '158.160.25.8',
     '127.0.0.1',
+    'design-zavod.tech',
+    'www.design-zavod.tech'
 ] + os.getenv('ALLOWED_HOSTS', '').split()
 
 SITE_ID = 1
