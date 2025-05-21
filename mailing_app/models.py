@@ -24,6 +24,7 @@ class Mailing(models.Model):
         default='text',
         verbose_name='Тип рассылки'
     )
+    tg_user_id = models.BigIntegerField(verbose_name='ID пользователя Telegram')
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Дата создания'
