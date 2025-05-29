@@ -7,28 +7,11 @@ User = get_user_model()
 class Mailing(models.Model):
     """Модель для хранения информации о рассылках"""
     text = models.TextField(verbose_name='Текст сообщения')
-    image = models.CharField(
-        max_length=255,
-        null=True,
-        blank=True,
-        verbose_name='Изображение'
-    )
-    button_url = models.CharField(
-        max_length=255,
-        null=True,
-        blank=True,
-        verbose_name='Ссылка'
-    )
-    type = models.CharField(
-        max_length=20,
-        default='text',
-        verbose_name='Тип рассылки'
-    )
+    image = models.CharField(max_length=255, null=True, blank=True, verbose_name='Изображение')
+    button_url = models.CharField(max_length=255, null=True, blank=True, verbose_name='Ссылка')
+    type = models.CharField(max_length=20, default='text', verbose_name='Тип рассылки')
     tg_user_id = models.BigIntegerField(verbose_name='ID пользователя Telegram')
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='Дата создания'
-    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
 
     class Meta:
         verbose_name = 'Рассылка'
