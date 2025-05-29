@@ -4,18 +4,20 @@ from django.db import models
 from .managers import UserManager
 
 class User(AbstractBaseUser, PermissionsMixin):
-    tg_id = models.PositiveBigIntegerField(unique=True, db_index=True,
-                                           verbose_name='TG_ID')
-    username = models.CharField(max_length=255, blank=True,
-                                null=True, verbose_name='Никнейм')
-    first_name = models.CharField(max_length=255, verbose_name='Имя')
-    last_name = models.CharField(max_length=255, null=True, blank=True,
-                                 verbose_name='Фамилия')
+    tg_id = models.PositiveBigIntegerField(unique=True, db_index=True, verbose_name='TG_ID')
+    username = models.CharField(max_length=255, blank=True, null=True, verbose_name='Никнейм из Telegram')
+    first_name = models.CharField(max_length=255, verbose_name='Имя из Telegram')
+    last_name = models.CharField(max_length=255, null=True, blank=True, verbose_name='Фамилия из Telegram')
+
+    # Для карты лояльности
+    user_first_name = models.CharField(max_length=255, blank=True, null=True, verbose_name='Имя')
+    user_last_name = models.CharField(max_length=255, blank=True, null=True, verbose_name='Фамилия')
+    birth_date = models.DateField(blank=True, null=True, verbose_name='Дата рождения')
+    email = models.EmailField(max_length=255, blank=True, null=True, verbose_name='Email')
+
     is_bot = models.BooleanField(default=False)
-    date_joined = models.DateTimeField(default=timezone.now,
-                                       verbose_name='Дата регистрации')
-    last_activity = models.DateTimeField(auto_now=True,
-                                         verbose_name='Последняя активность')
+    date_joined = models.DateTimeField(default=timezone.now, verbose_name='Дата регистрации')
+    last_activity = models.DateTimeField(auto_now=True, verbose_name='Последняя активность')
     is_staff = models.BooleanField(default=False, verbose_name='Админ')
     is_active = models.BooleanField(default=True, verbose_name='Активный')
     is_superuser = models.BooleanField(default=False, verbose_name='Суперюзер')
