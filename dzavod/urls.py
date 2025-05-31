@@ -7,6 +7,10 @@ from django.conf.urls.static import static
 from user_app.urls import router as user_app_router
 from mailing_app.urls import router as mailing_app_router
 from loyalty_app.urls import router as loyalty_app_router
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
 
 router = routers.DefaultRouter()
@@ -20,5 +24,7 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('', include('user_app.urls')), # Временная стартовая страница
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='docs')
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='docs'),
+    path('api/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/login/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

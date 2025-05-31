@@ -4,6 +4,8 @@ from .serializers import UserSerializer
 from django.shortcuts import render
 from datetime import datetime
 from django.contrib.auth import get_user_model
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 
 User = get_user_model()
 
@@ -44,3 +46,9 @@ class UserViewSet(viewsets.ViewSet):
 
         serializer = UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class AuthHealthCheckView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response({'status': 'ok', 'user': request.user.username})

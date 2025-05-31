@@ -139,6 +139,9 @@ AUTH_USER_MODEL = 'user_app.User'
 
 REST_FRAMEWORK = {        
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema', 
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
 }
 
 SPECTACULAR_SETTINGS = {
@@ -149,4 +152,13 @@ SPECTACULAR_SETTINGS = {
         "filter": True, # включить поиск по тегам
     },
     "COMPONENT_SPLIT_REQUEST": True
+}
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=31),
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
 }

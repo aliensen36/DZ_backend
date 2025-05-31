@@ -11,4 +11,5 @@ router.register(r'users', views.UserViewSet, basename='user')
 urlpatterns = [
     path('', views.home, name='home'), # Временная стартовая страница
     path('', include(router.urls)),
+    path('api/health/', views.AuthHealthCheckView.as_view(), name='auth_health_check'),
 ]

@@ -19,6 +19,7 @@ media/**/*
 
 # Виртуальное окружение
 venv/
+.venv/
 env/
 *.env
 .env/
