@@ -15,6 +15,7 @@ class LoyaltyCardViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         """Создание карты лояльности (автоматическое)"""
+
         # Проверяем, есть ли уже карта у пользователя
         if LoyaltyCard.objects.filter(user=request.user).exists():
             return Response(
