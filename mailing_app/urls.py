@@ -1,14 +1,8 @@
-from django.urls import include, path
+from django.urls import path
 from rest_framework import routers
-
 from . import views
 
+mailing_app_router = routers.DefaultRouter()
+mailing_app_router.register(r'mailings', views.MailingViewSet, basename='mailing')
 
-router = routers.DefaultRouter()
-router.register(r'mailings', views.MailingViewSet)
-
-
-urlpatterns = [
-    path('', include(router.urls)),
-    # path('api/mailings/<int:pk>/send/', send_mailing, name='mailing-send'),
-]
+urlpatterns = []

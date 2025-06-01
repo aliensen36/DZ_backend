@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from datetime import timedelta
 from dotenv import load_dotenv, find_dotenv
 
 load_dotenv(find_dotenv())
@@ -23,8 +24,15 @@ ALLOWED_HOSTS = [
     '158.160.25.8',
     '127.0.0.1',
     'design-zavod.tech',
-    'www.design-zavod.tech'
+    'www.design-zavod.tech',
+    '.ngrok-free.app'
 ] + os.getenv('ALLOWED_HOSTS', '').split()
+
+
+CORS_ALLOWED_ORIGINS = [
+    origin.strip() for origin in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if origin.strip()
+]
+
 
 SITE_ID = 1
 
@@ -154,11 +162,27 @@ SPECTACULAR_SETTINGS = {
     "COMPONENT_SPLIT_REQUEST": True
 }
 
-from datetime import timedelta
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=31),
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
+}
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'user_app': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+    },
 }

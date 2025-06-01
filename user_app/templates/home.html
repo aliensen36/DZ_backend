@@ -3,20 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Дизайн завода</title>
+    <title>Дизайн завод</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 100px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            text-align: center;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
         h1 {
+            color: #ff6f61;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        p {
+            font-size: 1.1em;
+            line-height: 1.6;
+            color: #555;
+        }
+        #user-info {
+            font-weight: bold;
             color: #333;
+            margin: 20px 0;
+            min-height: 24px;
+        }
+        button {
+            background-color: #ff6f61;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #e55a50;
+        }
+        .error {
+            color: #d32f2f;
+        }
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 1.5em;
+            }
+            button {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>Добро пожаловать в Telegram Mini App Дизайн завода!</h1>
+    <div class="container">
+        <h1>Добро пожаловать в приложение Дизайн завода!</h1>
+        <p>Здесь рождаются креативные идеи и воплощаются смелые проекты.</p>
+        <div id="user-info">Аутентификация...</div>
+        <button onclick="fetchProtectedData()">Войти</button>
+    </div>
+
+    <script>
+        // Получаем initData
+        const initData = window.Telegram.WebApp.initData;
+        let jwtToken = null;
+
+        // Отправляем initData на сервер для получения JWT
+        fetch('/api/auth/verify/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `init_data=${encodeURIComponent(initData)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            const userInfo = document.getElementById('user-info');
+            if (data.status === 'success') {
+                jwtToken = data.token; // Сохраняем JWT
+                userInfo.innerText = `Присоединяйся, ${data.user.first_name} (@${data.user.username || data.user.tg_id})!`;
+            } else {
+                userInfo.innerText = 'Ошибка: ' + data.error;
+                userInfo.classList.add('error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            const userInfo = document.getElementById('user-info');
+            userInfo.innerText = 'Не удалось аутентифицироваться';
+            userInfo.classList.add('error');
+        });
+
+        // Функция для запроса к защищённому эндпоинту
+        function fetchProtectedData() {
+            const userInfo = document.getElementById('user-info');
+            if (!jwtToken) {
+                userInfo.innerText = 'Сначала нужно аутентифицироваться';
+                userInfo.classList.add('error');
+                return;
+            }
+
+            fetch('/api/auth/protected-endpoint/', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${jwtToken}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    userInfo.innerText = data.message;
+                    userInfo.classList.remove('error');
+                } else {
+                    userInfo.innerText = 'Ошибка: ' + data.error;
+                    userInfo.classList.add('error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                userInfo.innerText = 'Не удалось войти';
+                userInfo.classList.add('error');
+            });
+        }
+
+        // Инициализация Telegram WebApp
+        window.Telegram.WebApp.ready();
+    </script>
 </body>
 </html>

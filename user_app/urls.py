@@ -1,15 +1,12 @@
-from django.urls import include, path
-from rest_framework import routers
-
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from . import views
+from .views import UserViewSet
 
-
-router = routers.DefaultRouter()
-router.register(r'users', views.UserViewSet, basename='user')
-
+user_app_router = DefaultRouter()
+user_app_router.register(r'auth', views.AuthViewSet, basename='auth')
+user_app_router.register(r'users', UserViewSet, basename='user')
 
 urlpatterns = [
-    path('', views.home, name='home'), # Временная стартовая страница
-    path('', include(router.urls)),
-    path('api/health/', views.AuthHealthCheckView.as_view(), name='auth_health_check'),
+    path('', views.home, name='home'),  # Временная стартовая страница
 ]
