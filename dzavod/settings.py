@@ -32,6 +32,10 @@ ALLOWED_HOSTS = [
 CORS_ALLOWED_ORIGINS = [
     origin.strip() for origin in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if origin.strip()
 ]
+CORS_ALLOW_HEADERS = ["authorization",
+                      "content-type",
+                      "x-api-key",
+                      ]
 
 
 SITE_ID = 1
