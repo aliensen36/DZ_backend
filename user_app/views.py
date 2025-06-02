@@ -28,7 +28,15 @@ def home(request):
     return render(request, 'home.html', {})
 
 
-class UserViewSet(viewsets.ViewSet):
+class UserViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    viewsets.GenericViewSet
+):
+    lookup_field = 'tg_id'
+
     def list(self, request):
         # Проверка API-ключа для бота
         api_key = request.headers.get('X-API-Key')
@@ -76,6 +84,24 @@ class UserViewSet(viewsets.ViewSet):
         serializer = UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    def retrieve(self, request, tg_id=None):
+        try:
+            user = User.objects.get(tg_id=tg_id)
+            serializer = UserSerializer(user)
+            return Response(serializer.data)
+        except User.DoesNotExist:
+            return Response({"detail": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
+
+    def partial_update(self, request, tg_id=None):
+        try:
+            user = User.objects.get(tg_id=tg_id)
+            serializer = UserSerializer(user, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist:
+            return Response({"detail": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
 
 def verify_jwt(request):
     """Проверка JWT в заголовке Authorization."""
