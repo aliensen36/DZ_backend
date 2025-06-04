@@ -14,6 +14,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     user_last_name = models.CharField(max_length=255, blank=True, null=True, verbose_name='Фамилия')
     birth_date = models.DateField(blank=True, null=True, verbose_name='Дата рождения')
     email = models.EmailField(max_length=255, blank=True, null=True, verbose_name='Email')
+    phone_number = models.CharField(max_length=16, blank=True, null=True, verbose_name='Номер телефона')
 
     is_bot = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now, verbose_name='Дата регистрации')
