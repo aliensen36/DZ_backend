@@ -190,3 +190,6 @@ LOGGING = {
         },
     },
 }
+
+
+CSRF_TRUSTED_ORIGINS = ['https://design-zavod.tech']
