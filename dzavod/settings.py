@@ -25,13 +25,27 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'back.design-zavod.tech',
     'www.back.design-zavod.tech',
-    '.ngrok-free.app'
+    'design-zavod.tech',
+    'www.design-zavod.tech'
 ] + os.getenv('ALLOWED_HOSTS', '').split()
 
 
-CORS_ALLOWED_ORIGINS = [
-    origin.strip() for origin in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if origin.strip()
+# Основные доверенные origins (бек и фронт)
+BASE_CORS_ALLOWED_ORIGINS = [
+    'https://back.design-zavod.tech',
+    'https://design-zavod.tech',
 ]
+
+# Динамические origins из переменной окружения
+ENV_CORS_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
+    if origin.strip()
+]
+
+# Объединенный список
+CORS_ALLOWED_ORIGINS = BASE_CORS_ALLOWED_ORIGINS + ENV_CORS_ALLOWED_ORIGINS
+
 CORS_ALLOW_HEADERS = ["authorization",
                       "content-type",
                       "x-api-key",
