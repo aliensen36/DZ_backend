@@ -23,8 +23,8 @@ ALLOWED_HOSTS = [
     'localhost',
     '158.160.25.8',
     '127.0.0.1',
-    'design-zavod.tech',
-    'www.design-zavod.tech',
+    'back.design-zavod.tech',
+    'www.back.design-zavod.tech',
     '.ngrok-free.app'
 ] + os.getenv('ALLOWED_HOSTS', '').split()
 
