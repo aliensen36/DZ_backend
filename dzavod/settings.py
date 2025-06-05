@@ -192,4 +192,8 @@ LOGGING = {
 }
 
 
-CSRF_TRUSTED_ORIGINS = ['https://design-zavod.tech']
+CSRF_TRUSTED_ORIGINS = [
+    'https://back.design-zavod.tech',
+    'https://design-zavod.tech'
+]
+
