@@ -12,7 +12,10 @@ class Resident(models.Model):
     working_time = models.TextField(verbose_name='График работы')
     email = models.EmailField(max_length=255, unique=True, blank=True, null=True, verbose_name='Email')
     phone_number = models.CharField(max_length=16, unique=True, blank=True, null=True, verbose_name='Номер телефона')
-    address = models.CharField(max_length=255, unique=True, verbose_name='Адрес на территории завода')
+    official_website = models.URLField(max_length=255, unique=True, blank=True, null=True, verbose_name='Официальный сайт')
+    full_address = models.CharField(max_length=255, unique=True, verbose_name='Полный адрес на территории завода')
+    floor = models.IntegerField(verbose_name='Этаж')
+    office = models.IntegerField(verbose_name='Офис/Помещение')
     category = models.CharField(max_length=32, choices=RESIDENT_CATEGORY, verbose_name='Категория')
 
     def __str__(self):
