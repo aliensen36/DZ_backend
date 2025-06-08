@@ -8,8 +8,27 @@ class ResidentSerializer(serializers.ModelSerializer):
         model = Resident
         fields = '__all__'
 
+    def validate_phone_number(self, value):
+        phone_regex = re.compile(r"^\+?\d{10,15}$")
+        if value and not phone_regex.match(value):
+            raise serializers.ValidationError(
+                "Некорректный номер телефона: 10–15 цифр, можно с '+'. Пример: +79001234567"
+            )
+        return value
+
+    def validate_floor(self, value):
+        if value < 1 or value > 5:
+            raise serializers.ValidationError("Этаж должен быть от 1 до 5.")
+        return value
+    
+    def validate_office(self, value):
+        if value < 1 or value > 66:
+            raise serializers.ValidationError("Офис должен быть от 1 до 66.")
+        return value
+
     def validate(self, data):
-        instance = self.instance  # None при создании, объект при обновлении
+        instance = self.instance
+        errors = {}
 
         def is_duplicate(field):
             value = data.get(field)
@@ -20,25 +39,7 @@ class ResidentSerializer(serializers.ModelSerializer):
                 qs = qs.exclude(pk=instance.pk)
             return qs.exists()
 
-        # Валидация для российского номера телефона
-        def validate_phone_number(phone_number):
-            # Регулярное выражение для проверки российского номера
-            phone_regex = re.compile(r"^\+?\d{10,15}$")
-            if phone_number and not phone_regex.match(phone_number):
-                raise serializers.ValidationError("Некорректный номер телефона, 10–15 цифр, можно с '+'. Пример: +79001234567")
-            return phone_number
-
-        errors = {}
-
-        phone_number = data.get('phone_number')
-        if phone_number:
-            try:
-                validate_phone_number(phone_number)
-            except serializers.ValidationError as e:
-                errors['phone_number'] = str(e)
-
-        # Проверка на дубликаты
-        for field in ['name', 'email', 'phone_number', 'address']:
+        for field in ['name', 'email', 'phone_number', 'full_address', 'official_website', 'office']:
             if is_duplicate(field):
                 errors[field] = f"{field.capitalize()} уже используется другим резидентом."
 
