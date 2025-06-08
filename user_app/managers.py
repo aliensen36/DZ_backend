@@ -24,8 +24,7 @@ class UserManager(BaseUserManager):
         """
             Создание суперюзера.
         """
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('role', 'design_admin')
         extra_fields.setdefault('is_active', True)
 
         if not password:

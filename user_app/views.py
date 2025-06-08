@@ -51,8 +51,9 @@ class UserViewSet(
         if not payload:
             return Response({"error": "Invalid or missing token"}, status=status.HTTP_403_FORBIDDEN)
 
-        if not payload.get('is_staff') and not payload.get('is_superuser'):
-            return Response({"error": "Access denied"}, status=status.HTTP_403_FORBIDDEN)
+        # Только design_admin может видеть всех пользователей
+        if payload.get('role') != User.Role.DESIGN_ADMIN:
+            return Response({"error": "Access denied. Only design_admin can view all users."}, status=status.HTTP_403_FORBIDDEN)
 
         users = User.objects.all()
         serializer = UserSerializer(users, many=True)
@@ -69,13 +70,14 @@ class UserViewSet(
                 'last_name': data.get('last_name'),
                 'username': data.get('username'),
                 'is_bot': data.get('is_bot', False),
+                'role': data.get('role', User.Role.USER),
             }
         )
 
         if not created:
             changed = False
-            for field in ['first_name', 'last_name', 'username']:
-                if getattr(user, field) != data.get(field):
+            for field in ['first_name', 'last_name', 'username', 'role']:
+                if field in data and getattr(user, field) != data.get(field):
                     setattr(user, field, data.get(field))
                     changed = True
             if changed:
@@ -175,12 +177,14 @@ class AuthViewSet(viewsets.ViewSet):
                 "username": username,
                 "is_bot": is_bot,
                 "is_active": True,
+                "role": User.Role.USER,
             }
         )
 
-        # Генерация JWT
+        # Генерация JWT с ролью
         jwt_payload = {
             "tg_id": tg_id,
+            "role": user_obj.role,
             "is_staff": user_obj.is_staff,
             "is_superuser": user_obj.is_superuser,
             "exp": datetime.now(timezone.utc) + timedelta(hours=24),
@@ -196,6 +200,7 @@ class AuthViewSet(viewsets.ViewSet):
                 "tg_id": user_obj.tg_id,
                 "first_name": user_obj.first_name,
                 "username": user_obj.username,
+                "role": user_obj.role,
                 "created": created
             }
         })
