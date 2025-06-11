@@ -1,14 +1,27 @@
 from rest_framework import serializers
 from .models import LoyaltyCard
 
+import logging
+logger = logging.getLogger(__name__)
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
 class LoyaltyCardSerializer(serializers.ModelSerializer):
-    user_full_name = serializers.SerializerMethodField()
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), write_only=True)
+    card_image = serializers.ImageField(read_only=True)
 
     class Meta:
         model = LoyaltyCard
-        fields = ['card_number', 'card_image', 'created_at', 'user_full_name']
-        read_only_fields = fields  # Все поля только для чтения
+        fields = ['user', 'card_image', 'card_number', 'created_at']
+        read_only_fields = ['card_image', 'card_number', 'created_at']
 
-    def get_user_full_name(self, obj):
-        """Возвращает полное имя пользователя"""
-        return f"{obj.user.user_first_name or obj.user.first_name} {obj.user.user_last_name or obj.user.last_name}"
+    def validate_user(self, value):
+        logger.info(f"Validating user ID: {value.id}")
+        return value
+
+    def create(self, validated_data):
+        user = validated_data.pop('user')
+        logger.info(f"Creating loyalty card for user tg_id={user.tg_id}")
+        card = LoyaltyCard.objects.create(user=user, **validated_data)
+        return card
