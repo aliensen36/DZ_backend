@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     'user_app.apps.UserAppConfig',
     'mailing_app.apps.MailingAppConfig',
     'loyalty_app.apps.LoyaltyAppConfig',
+    'resident_app.apps.ResidentAppConfig'
 ]
 
 MIDDLEWARE = [
