@@ -8,13 +8,17 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 class LoyaltyCardSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), write_only=True)
+    user_first_name = serializers.CharField(source="user.user_first_name", read_only=True)
+    user_last_name = serializers.CharField(source="user.user_last_name", read_only=True)
+    birth_date = serializers.DateField(source="user.birth_date", read_only=True)
+    phone_number = serializers.CharField(source="user.phone_number", read_only=True)
+    email = serializers.EmailField(source="user.email", read_only=True)
     card_image = serializers.ImageField(read_only=True)
 
     class Meta:
         model = LoyaltyCard
-        fields = ['user', 'card_image', 'card_number', 'created_at']
-        read_only_fields = ['card_image', 'card_number', 'created_at']
+        fields = ['user_first_name', 'user_last_name', 'user_last_name', 'birth_date', 'phone_number', 'email', 'card_image', 'card_number', 'created_at']
+        read_only_fields = ['user_first_name', 'user_last_name', 'user_last_name', 'birth_date', 'phone_number', 'email', 'card_image', 'card_number', 'created_at']
 
     def validate_user(self, value):
         logger.info(f"Validating user ID: {value.id}")
