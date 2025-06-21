@@ -71,7 +71,7 @@ class LoyaltyCard(models.Model):
         super().save(*args, **kwargs)
 
     def get_balance(self):
-        return self.transactions.aggregate(total=models.Sum('amount'))['total'] or 0
+        return self.transactions.aggregate(total=models.Sum('points'))['total'] or 0
 
 
 TRANSACTION_TYPE =[

@@ -87,12 +87,31 @@ class LoyaltyCardViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Изображение карты не найдено"}, status=status.HTTP_404_NOT_FOUND)
         logger.info(f"Card image found for tg_id={user__tg_id}")
         return Response({"image_url": request.build_absolute_uri(card.card_image.url)})
-    
+
     @extend_schema(description="Получить баланс карты лояльности")
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated | IsBotAuthenticated])
     def balance(self, request):
-        user = request.user
-        logger.info(f"Fetching balance for tg_id={user.tg_id}")
+        # Проверяем, аутентифицирован ли пользователь или это запрос от бота
+        if request.user.is_authenticated:
+            user = request.user
+            tg_id = user.tg_id
+        else:
+            # Если запрос от бота, получаем tg_id из параметров запроса
+            tg_id = request.query_params.get('tg_id')
+            if not tg_id:
+                return Response(
+                    {"detail": "Не указан tg_id в параметрах запроса"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            try:
+                user = User.objects.get(tg_id=tg_id)
+            except User.DoesNotExist:
+                return Response(
+                    {"detail": "Пользователь с указанным tg_id не найден"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+        logger.info(f"Fetching balance for tg_id={tg_id}")
 
         card = LoyaltyCard.objects.filter(user=user).first()
         if not card:
@@ -100,7 +119,7 @@ class LoyaltyCardViewSet(viewsets.ModelViewSet):
 
         # Получаем баланс
         balance = card.get_balance()
-        logger.info(f"Balance fetched for tg_id={user.tg_id}: {balance}")
+        logger.info(f"Balance fetched for tg_id={tg_id}: {balance}")
 
         return Response({"balance": balance}, status=status.HTTP_200_OK)
 
