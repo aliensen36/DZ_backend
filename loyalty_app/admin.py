@@ -1,30 +1,62 @@
+from django import forms
 from django.contrib import admin
 from django.utils.html import format_html
 from .models import LoyaltyCard
 
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+
+class LoyaltyCardForm(forms.ModelForm):
+    # Добавляем поля из связанной модели User
+    user_first_name = forms.CharField(max_length=255, required=False, label="Имя")
+    user_last_name = forms.CharField(max_length=255, required=False, label="Фамилия")
+
+    class Meta:
+        model = LoyaltyCard
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.user:
+            self.fields['user_first_name'].initial = self.instance.user.user_first_name
+            self.fields['user_last_name'].initial = self.instance.user.user_last_name
+
+    def save(self, commit=True):
+        loyalty_card = super().save(commit=False)
+        if loyalty_card.user:
+            loyalty_card.user.user_first_name = self.cleaned_data['user_first_name']
+            loyalty_card.user.user_last_name = self.cleaned_data['user_last_name']
+            if commit:
+                loyalty_card.user.save()
+                loyalty_card.save()
+        return loyalty_card
 
 @admin.register(LoyaltyCard)
 class LoyaltyCardAdmin(admin.ModelAdmin):
-    list_display = ('card_number', 'user_info', 'created_at')  # Убрали card_image_preview
+    form = LoyaltyCardForm  # Используем кастомную форму
+
+    list_display = ('card_number', 'user_info', 'created_at')
+    list_display_links = ('card_number', 'user_info', 'created_at')
     list_filter = ('created_at',)
     search_fields = ('card_number', 'user__first_name', 'user__last_name',
-                     'user__user_first_name', 'user__user_last_name')
+                    'user__user_first_name', 'user__user_last_name')
     readonly_fields = ('card_number', 'created_at', 'card_image_preview')
 
-    # Новый порядок полей для страницы редактирования
     fieldsets = (
         ('Превью карты', {
             'fields': ('card_image_preview',),
             'classes': ('wide',)
         }),
         (None, {
-            'fields': ('user', 'card_number', 'created_at')
+            'fields': ('user', 'user_first_name', 'user_last_name', 'card_number', 'created_at')
         }),
         ('Изображение карты', {
             'fields': ('card_image',),
             'classes': ('collapse',)
         }),
     )
+
 
     actions = ['regenerate_card_image']
 
@@ -43,7 +75,7 @@ class LoyaltyCardAdmin(admin.ModelAdmin):
             return format_html(
                 '<div style="margin-bottom: 20px;">'
                 '<h3>Превью карты лояльности</h3>'
-                '<img src="{}" style="max-height: 300px; border: 1px solid #ddd; padding: 5px;"/>'
+                '<img src="{}" style="height: auto; width: 300px; border: 1px solid #ddd; padding: 5px;"/>'
                 '</div>',
                 obj.card_image.url
             )
