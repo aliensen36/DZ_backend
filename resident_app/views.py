@@ -1,9 +1,10 @@
 from rest_framework import viewsets
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-
-from .models import Resident
+from .models import Resident, RESIDENT_CATEGORY
 from .serializers import ResidentSerializer
+
 
 class ResidentViewSet(viewsets.ModelViewSet):
     queryset = Resident.objects.all()
@@ -27,4 +28,9 @@ class ResidentViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
         return Response(serializer.data)
     
-    
+
+@api_view(['GET'])
+def resident_categories(request):
+    return Response({
+        'categories': RESIDENT_CATEGORY,
+    })
