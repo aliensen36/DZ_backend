@@ -17,7 +17,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class ResidentViewSet(viewsets.ModelViewSet):
     queryset = Resident.objects.all()
     serializer_class = ResidentSerializer
-    permission_classes = [IsAdmin]
+    permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
 
     def get_queryset(self):
         queryset = super().get_queryset()

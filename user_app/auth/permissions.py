@@ -16,6 +16,5 @@ class IsResident(BasePermission):
 class IsBotAuthenticated(BasePermission):
     def has_permission(self, request, view):
         token = request.headers.get('X-Bot-Api-Key')
-        print(f"[DEBUG] BOT_API_KEY received: {token}")
-        print(f"[DEBUG] BOT_API_KEY expected: {settings.BOT_API_KEY}")
+        print(f"Received X-Bot-Api-Key: {token}, Expected: {settings.BOT_API_KEY}")
         return token == settings.BOT_API_KEY

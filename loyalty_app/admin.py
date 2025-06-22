@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import LoyaltyCard
+from .models import LoyaltyCard, PointsTransaction
 
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -109,3 +109,31 @@ class LoyaltyCardAdmin(admin.ModelAdmin):
                 obj.card_number = obj.generate_card_number()
             obj.generate_card_image()
         super().save_model(request, obj, form, change)
+
+
+@admin.register(PointsTransaction)
+class PointsTransactionAdmin(admin.ModelAdmin):
+    # Поля, отображаемые в списке транзакций
+    list_display = ('transaction_type', 'points', 'price', 'created_at', 'card_id', 'resident_id')
+
+    # Фильтры в боковой панели
+    list_filter = ('transaction_type', 'created_at', 'card_id', 'resident_id')
+
+    # Поля для поиска
+    search_fields = ('card_id__card_number', 'resident_id__name', 'transaction_type')
+
+    # Поля, доступные для редактирования в форме
+    fields = ('points', 'price', 'transaction_type', 'card_id', 'resident_id', 'created_at')
+
+    # Поля, которые нельзя редактировать (например, дата создания)
+    readonly_fields = ('created_at',)
+
+    # Сортировка по дате создания (по убыванию, чтобы новые транзакции были сверху)
+    ordering = ('-created_at',)
+
+    # Отображение связанных объектов в виде выпадающих списков
+    autocomplete_fields = ['card_id', 'resident_id']
+
+    def get_queryset(self, request):
+        # Оптимизация запросов, чтобы подгружать связанные объекты
+        return super().get_queryset(request).select_related('card_id', 'resident_id')

@@ -16,14 +16,14 @@ class Category(models.Model):
 class Resident(models.Model):
     name = models.CharField(max_length=255, unique=True, verbose_name='Наименование')
     description = models.TextField(verbose_name='Описание')
-    working_time = models.TextField(verbose_name='График работы')
+    working_time = models.TextField(null=True, blank=True, verbose_name='График работы')
     email = models.EmailField(max_length=255, unique=True, blank=True, null=True, verbose_name='Email')
     phone_number = models.CharField(max_length=16, unique=True, blank=True, null=True, verbose_name='Номер телефона')
     official_website = models.URLField(max_length=255, unique=True, blank=True, null=True, verbose_name='Официальный сайт')
-    full_address = models.CharField(max_length=255, verbose_name='Полный адрес на территории завода')
-    floor = models.IntegerField(verbose_name='Этаж')
-    office = models.IntegerField(unique=True, verbose_name='Офис/Помещение')
-    category = models.ManyToManyField(Category, related_name='residents', verbose_name='Категория')
+    full_address = models.CharField(null=True, blank=True, max_length=255, verbose_name='Полный адрес на территории завода')
+    floor = models.IntegerField(null=True, blank=True, verbose_name='Этаж')
+    office = models.IntegerField(null=True, blank=True, unique=True, verbose_name='Офис/Помещение')
+    categories = models.ManyToManyField(Category, related_name='residents', verbose_name='Категории')
 
     def __str__(self):
         return self.name
@@ -31,6 +31,3 @@ class Resident(models.Model):
     class Meta:
         verbose_name = 'Резидент'
         verbose_name_plural = 'Резиденты'
-
-
-
