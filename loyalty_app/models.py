@@ -7,8 +7,9 @@ import string
 import os
 from django.contrib.auth import get_user_model
 
-User = get_user_model()
+from resident_app.models import Resident
 
+User = get_user_model()
 
 
 class LoyaltyCard(models.Model):
@@ -68,3 +69,28 @@ class LoyaltyCard(models.Model):
         if not self.card_image or not self.pk:
             self.generate_card_image()
         super().save(*args, **kwargs)
+
+    def get_balance(self):
+        return self.transactions.aggregate(total=models.Sum('points'))['total'] or 0
+
+
+TRANSACTION_TYPE =[
+    ('начисление', 'начисление'),
+    ('списание', 'списание')
+]
+
+class PointsTransaction(models.Model):
+    points = models.IntegerField(null=False, verbose_name='Баллы (-/+): списание или пополнение')
+    price = models.FloatField(null=False, verbose_name='Сумма с которой начислились баллы или списались')
+    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPE, verbose_name='Тип транзакции')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата транзакции')
+
+    card_id = models.ForeignKey(LoyaltyCard, on_delete=models.CASCADE, related_name='transactions')
+    resident_id = models.ForeignKey(Resident, on_delete=models.CASCADE, related_name='transactions')
+
+    class Meta:
+        verbose_name = 'Транзакция баллов'
+        verbose_name_plural = 'Транзакции баллов'
+
+    def __str__(self):
+        return f"{self.transaction_type.capitalize()} {self.points} баллов"

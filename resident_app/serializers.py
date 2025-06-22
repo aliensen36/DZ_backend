@@ -1,9 +1,18 @@
 import re
 from rest_framework import serializers
 
-from .models import Resident
+from .models import Category, Resident
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'description']
 
 class ResidentSerializer(serializers.ModelSerializer):
+    categories = CategorySerializer(many=True, read_only=True)
+    category_ids = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(), write_only=True, many=True, source='categories'
+    )
     class Meta:
         model = Resident
         fields = '__all__'

@@ -1,17 +1,29 @@
 from rest_framework import viewsets
-from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Resident, RESIDENT_CATEGORY
-from .serializers import ResidentSerializer
+
+from .models import Category, Resident
+from .serializers import ResidentSerializer, CategorySerializer
+from user_app.auth.permissions import IsAdmin
+
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = [IsAdmin]
 
 
 class ResidentViewSet(viewsets.ModelViewSet):
     queryset = Resident.objects.all()
     serializer_class = ResidentSerializer
+    permission_classes = [IsAdmin]
 
     def get_queryset(self):
-        return super().get_queryset()
+        queryset = super().get_queryset()
+        category_id = self.request.query_params.get('category_id')
+        if category_id:
+            queryset = queryset.filter(categories__id=category_id)
+        return queryset
 
 
     def create(self, request, *args, **kwargs):
@@ -28,9 +40,4 @@ class ResidentViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
         return Response(serializer.data)
     
-
-@api_view(['GET'])
-def resident_categories(request):
-    return Response({
-        'categories': RESIDENT_CATEGORY,
-    })
+    
