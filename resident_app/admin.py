@@ -1,13 +1,17 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Resident
+from .models import *
 
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ('name',)
+    search_fields = ('name', 'description')
 
 @admin.register(Resident)
 class ResidentAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'floor_office', 'contact_info', 'working_time_short')
+    list_display = ('name',)
     list_display_links = ('name',)
-    list_filter = ('category', 'floor')
+    list_filter = ('floor', 'office')
     search_fields = ('name', 'description', 'full_address', 'email', 'phone_number')
     list_per_page = 20
     ordering = ('name',)

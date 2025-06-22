@@ -1,16 +1,17 @@
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 
 from .models import Category, Resident
 from .serializers import ResidentSerializer, CategorySerializer
-from user_app.auth.permissions import IsAdmin
+from user_app.auth.permissions import IsAdmin, IsBotAuthenticated
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAdmin]
+    permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
 
 
 class ResidentViewSet(viewsets.ModelViewSet):

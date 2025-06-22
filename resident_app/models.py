@@ -3,7 +3,7 @@ from django.db import models
 
 class Category(models.Model):
     name = models.CharField(max_length=255, null=False, verbose_name='Наименование категории')
-    description = models.TextField(null=True, verbose_name='Описание категории')
+    description = models.TextField(null=True, blank=True, verbose_name='Описание категории')
 
     def __str__(self):
         return self.name
@@ -23,7 +23,7 @@ class Resident(models.Model):
     full_address = models.CharField(max_length=255, verbose_name='Полный адрес на территории завода')
     floor = models.IntegerField(verbose_name='Этаж')
     office = models.IntegerField(unique=True, verbose_name='Офис/Помещение')
-    categories = models.ManyToManyField(Category, related_name='residents')
+    category = models.ManyToManyField(Category, related_name='residents', verbose_name='Категория')
 
     def __str__(self):
         return self.name
