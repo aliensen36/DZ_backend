@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib import admin
+from django.core.exceptions import ValidationError
 from django.utils.html import format_html
 from .models import LoyaltyCard, PointsTransaction
 
@@ -111,10 +112,51 @@ class LoyaltyCardAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
+
+class PointsTransactionForm(forms.ModelForm):
+    class Meta:
+        model = PointsTransaction
+        fields = ['price', 'transaction_type', 'card_id', 'resident_id']
+
+    def clean(self):
+        cleaned_data = super().clean()
+        price = cleaned_data.get('price')
+        transaction_type = cleaned_data.get('transaction_type')
+        card_id = cleaned_data.get('card_id')
+
+        if price is not None and price <= 0:
+            raise ValidationError({'price': 'Сумма должна быть положительной.'})
+
+        if transaction_type == 'начисление':
+            # Логика начисления: 1 балл за каждые 100 рублей
+            points = int(price) // 100
+            if points <= 0:
+                raise ValidationError({'price': 'Недостаточно суммы для начисления баллов.'})
+            cleaned_data['points'] = points
+        elif transaction_type == 'списание':
+            # Логика списания: до 10% от суммы
+            max_deductible_points = int(price * 0.10)
+            if max_deductible_points <= 0:
+                raise ValidationError({'price': 'Недостаточная сумма для списания баллов.'})
+            if card_id:
+                current_balance = card_id.get_balance()
+                if current_balance < max_deductible_points:
+                    raise ValidationError({
+                        'card_id': f'Недостаточно баллов. Баланс: {current_balance}, требуется: {max_deductible_points}'
+                    })
+                cleaned_data['points'] = -max_deductible_points
+        else:
+            raise ValidationError({'transaction_type': 'Недопустимый тип транзакции.'})
+
+        return cleaned_data
+
+
 @admin.register(PointsTransaction)
 class PointsTransactionAdmin(admin.ModelAdmin):
+    form = PointsTransactionForm
+
     # Поля, отображаемые в списке транзакций
-    list_display = ('transaction_type', 'points', 'price', 'created_at', 'card_id', 'resident_id')
+    list_display = ('transaction_type', 'points', 'price', 'created_at', 'card_number', 'resident_name')
 
     # Фильтры в боковой панели
     list_filter = ('transaction_type', 'created_at', 'card_id', 'resident_id')
@@ -123,17 +165,34 @@ class PointsTransactionAdmin(admin.ModelAdmin):
     search_fields = ('card_id__card_number', 'resident_id__name', 'transaction_type')
 
     # Поля, доступные для редактирования в форме
-    fields = ('points', 'price', 'transaction_type', 'card_id', 'resident_id', 'created_at')
+    fields = ('price', 'transaction_type', 'card_id', 'resident_id', 'created_at')
 
-    # Поля, которые нельзя редактировать (например, дата создания)
+    # Поля, которые нельзя редактировать
     readonly_fields = ('created_at',)
 
-    # Сортировка по дате создания (по убыванию, чтобы новые транзакции были сверху)
+    # Сортировка по дате создания
     ordering = ('-created_at',)
 
-    # Отображение связанных объектов в виде выпадающих списков
+    # Автодополнение для связанных объектов
     autocomplete_fields = ['card_id', 'resident_id']
 
+    # Оптимизация запросов
     def get_queryset(self, request):
-        # Оптимизация запросов, чтобы подгружать связанные объекты
         return super().get_queryset(request).select_related('card_id', 'resident_id')
+
+    # Отображение номера карты
+    def card_number(self, obj):
+        return obj.card_id.card_number if obj.card_id else '-'
+
+    card_number.short_description = 'Номер карты'
+
+    # Отображение имени резидента
+    def resident_name(self, obj):
+        return obj.resident_id.name if obj.resident_id else '-'
+
+    resident_name.short_description = 'Резидент'
+
+    def save_model(self, request, obj, form, change):
+        # Установка points на основе логики из формы
+        obj.points = form.cleaned_data['points']
+        super().save_model(request, obj, form, change)
