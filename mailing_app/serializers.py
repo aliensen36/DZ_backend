@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Mailing
+from .models import Mailing, Subscription
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -33,3 +33,7 @@ class MailingListSerializer(serializers.ModelSerializer):
         return obj.text[:50] + '...' if len(obj.text) > 50 else obj.text
 
 
+class SubscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subscription
+        fields = ['id', 'name', 'description']

@@ -1,4 +1,5 @@
 from django.db import models
+from user_app.models import User
 
 
 class Category(models.Model):
@@ -20,10 +21,12 @@ class Resident(models.Model):
     email = models.EmailField(max_length=255, unique=True, blank=True, null=True, verbose_name='Email')
     phone_number = models.CharField(max_length=16, unique=True, blank=True, null=True, verbose_name='Номер телефона')
     official_website = models.URLField(max_length=255, unique=True, blank=True, null=True, verbose_name='Официальный сайт')
-    full_address = models.CharField(null=True, blank=True, max_length=255, verbose_name='Полный адрес на территории завода')
-    floor = models.IntegerField(null=True, blank=True, verbose_name='Этаж')
-    office = models.IntegerField(null=True, blank=True, unique=True, verbose_name='Офис/Помещение')
-    categories = models.ManyToManyField(Category, related_name='residents', verbose_name='Категории')
+    full_address = models.CharField(max_length=255, verbose_name='Полный адрес на территории завода')
+    floor = models.IntegerField(verbose_name='Этаж')
+    office = models.IntegerField(unique=True, verbose_name='Офис/Помещение')
+
+    categories = models.ManyToManyField(Category, related_name='residents')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='resident')
 
     def __str__(self):
         return self.name
