@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 
+from user_app.models import User
+
 User = get_user_model()
 
 
@@ -19,3 +21,17 @@ class Mailing(models.Model):
 
     def __str__(self):
         return f"{self.created_at}"
+
+
+class Subscription(models.Model):
+    """Модель для хранения подписок пользователей"""
+    name = models.CharField(max_length=255, unique=True, null=False, verbose_name='Наименование расслыки')
+    description = models.TextField(null=True, blank=True, verbose_name='Описание подписки')
+    users = models.ManyToManyField(User, related_name='subscriptions')
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+
+    def __str__(self):
+        return self.name
