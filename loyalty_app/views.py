@@ -127,7 +127,7 @@ class LoyaltyCardViewSet(viewsets.ModelViewSet):
 class PointsTransactionViewSet(viewsets.ModelViewSet):
     queryset = PointsTransaction.objects.all()
     serializer_class = PointsTransactionSerializer
-    permission_classes = [IsResident]
+    permission_classes = [IsBotAuthenticated | IsResident]
 
     def list(self, request):
         return Response({"detail": "Этот эндпоинт отключен."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
