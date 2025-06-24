@@ -4,7 +4,7 @@ from user_app.models import User
 
 class Category(models.Model):
     name = models.CharField(max_length=255, null=False, verbose_name='Наименование категории')
-    description = models.TextField(null=True, verbose_name='Описание категории')
+    description = models.TextField(null=True, blank=True, verbose_name='Описание категории')
 
     def __str__(self):
         return self.name
@@ -17,7 +17,7 @@ class Category(models.Model):
 class Resident(models.Model):
     name = models.CharField(max_length=255, unique=True, verbose_name='Наименование')
     description = models.TextField(verbose_name='Описание')
-    working_time = models.TextField(verbose_name='График работы')
+    working_time = models.TextField(null=True, blank=True, verbose_name='График работы')
     email = models.EmailField(max_length=255, unique=True, blank=True, null=True, verbose_name='Email')
     phone_number = models.CharField(max_length=16, unique=True, blank=True, null=True, verbose_name='Номер телефона')
     official_website = models.URLField(max_length=255, unique=True, blank=True, null=True, verbose_name='Официальный сайт')
@@ -34,6 +34,3 @@ class Resident(models.Model):
     class Meta:
         verbose_name = 'Резидент'
         verbose_name_plural = 'Резиденты'
-
-
-

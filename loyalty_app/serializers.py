@@ -17,7 +17,7 @@ class LoyaltyCardSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = LoyaltyCard
-        fields = ['user_first_name', 'user_last_name', 'user_last_name', 'birth_date', 'phone_number', 'email', 'card_image', 'card_number', 'created_at']
+        fields = ['id','user_first_name', 'user_last_name', 'user_last_name', 'birth_date', 'phone_number', 'email', 'card_image', 'card_number', 'created_at']
         read_only_fields = ['user_first_name', 'user_last_name', 'user_last_name', 'birth_date', 'phone_number', 'email', 'card_image', 'card_number', 'created_at']
 
     def validate_user(self, value):

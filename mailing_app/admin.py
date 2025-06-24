@@ -5,12 +5,11 @@ from .models import Mailing
 
 @admin.register(Mailing)
 class MailingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'truncated_text', 'type', 'created_at', 'image_preview')
-    list_filter = ('type', 'created_at')
+    list_display = ('id', 'truncated_text', 'created_at')
+    list_display_links = ('id', 'truncated_text', 'created_at')
+    list_filter = ('created_at',)
     search_fields = ('text', 'button_url')
     readonly_fields = ('created_at',)
-    # Поля, которые можно редактировать прямо из списка
-    list_editable = ('type',)
     # Пагинация
     list_per_page = 20
     # Отображение полей при редактировании
