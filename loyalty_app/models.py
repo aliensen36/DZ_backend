@@ -15,7 +15,6 @@ User = get_user_model()
 class LoyaltyCard(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='loyalty_card', verbose_name='Пользователь')
     card_number = models.CharField(max_length=15, unique=True, editable=False, verbose_name='Номер карты')
-    card_image = models.ImageField(upload_to='loyalty_cards/', blank=True, verbose_name='Изображение карты')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
 
     class Meta:
@@ -35,8 +34,10 @@ class LoyaltyCard(models.Model):
     def generate_card_image(self):
         if not self.user:
             raise ValueError("Cannot generate card image without a user")
+
         img = Image.new('RGB', (800, 500), color=(20, 60, 110))
         draw = ImageDraw.Draw(img)
+
         try:
             font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'arial.ttf')
             font_large = ImageFont.truetype(font_path, 40)
@@ -49,25 +50,29 @@ class LoyaltyCard(models.Model):
 
         first_name = self.user.user_first_name or self.user.first_name or "Не указано"
         last_name = self.user.user_last_name or self.user.last_name or "Не указано"
+        balance = self.get_balance()
+
         draw.text((50, 100), "Карта лояльности", font=font_large, fill=(255, 255, 255))
         draw.text((50, 200), f"Имя: {first_name}", font=font_medium, fill=(255, 255, 255))
         draw.text((50, 250), f"Фамилия: {last_name}", font=font_medium, fill=(255, 255, 255))
-        draw.text((50, 300), f"Номер карты: {self.card_number}", font=font_medium, fill=(255, 255, 255))
+        draw.text((50, 300), f"Баланс: {balance} баллов", font=font_medium, fill=(255, 255, 255))
+
+        card_number_text = f"Номер карты: {self.card_number}"
+        bbox = draw.textbbox((0, 0), card_number_text, font=font_small)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+
+        draw.text((800 - text_width - 30, 500 - text_height - 20), card_number_text, font=font_small,
+                  fill=(255, 255, 255))
 
         buffer = BytesIO()
         img.save(buffer, format='PNG')
-        self.card_image.save(
-            f'loyalty_card_{self.card_number}.png',
-            ContentFile(buffer.getvalue()),
-            save=False
-        )
-        buffer.close()
+        buffer.seek(0)
+        return buffer
 
     def save(self, *args, **kwargs):
         if not self.card_number:
             self.card_number = self.generate_card_number()
-        if not self.card_image or not self.pk:
-            self.generate_card_image()
         super().save(*args, **kwargs)
 
     def get_balance(self):

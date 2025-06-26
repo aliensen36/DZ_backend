@@ -1,3 +1,4 @@
+from rest_framework.reverse import reverse
 from rest_framework import serializers
 from .models import LoyaltyCard, PointsTransaction
 
@@ -13,22 +14,31 @@ class LoyaltyCardSerializer(serializers.ModelSerializer):
     birth_date = serializers.DateField(source="user.birth_date", read_only=True)
     phone_number = serializers.CharField(source="user.phone_number", read_only=True)
     email = serializers.EmailField(source="user.email", read_only=True)
-    card_image = serializers.ImageField(read_only=True)
+    card_image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = LoyaltyCard
-        fields = ['id','user_first_name', 'user_last_name', 'user_last_name', 'birth_date', 'phone_number', 'email', 'card_image', 'card_number', 'created_at']
-        read_only_fields = ['user_first_name', 'user_last_name', 'user_last_name', 'birth_date', 'phone_number', 'email', 'card_image', 'card_number', 'created_at']
-
-    def validate_user(self, value):
-        logger.info(f"Validating user ID: {value.id}")
-        return value
+        fields = ['id', 'user_first_name', 'user_last_name', 'birth_date', 'phone_number', 'email', 'card_number',
+                  'created_at', 'card_image_url']
+        read_only_fields = ['user_first_name', 'user_last_name', 'birth_date', 'phone_number', 'email', 'card_number',
+                            'created_at', 'card_image_url']
 
     def create(self, validated_data):
         user = validated_data.pop('user')
         logger.info(f"Creating loyalty card for user tg_id={user.tg_id}")
         card = LoyaltyCard.objects.create(user=user, **validated_data)
         return card
+
+    def get_card_image_url(self, obj):
+        request = self.context.get('request')
+        if request and obj.pk and hasattr(obj.user, 'tg_id'):
+            try:
+                relative_url = reverse('loyaltycard-loyalty-card-image', kwargs={'user__tg_id': obj.user.tg_id},
+                                       request=request)
+                return relative_url  # теперь это абсолютный URL, например https://example.com/api/loyalty/123/card-image/
+            except Exception as e:
+                logger.error(f"Error generating card_image_url for tg_id={obj.user.tg_id}: {str(e)}")
+        return None
 
 
 class PointsTransactionSerializer(serializers.ModelSerializer):

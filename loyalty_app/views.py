@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -29,64 +30,24 @@ class LoyaltyCardViewSet(viewsets.ModelViewSet):
         logger.info("Returning full queryset for bot")
         return self.queryset
 
-    @extend_schema(description="Create a loyalty card (bot only, requires user_id)")
-    def create(self, request, *args, **kwargs):
-        logger.info(f"Create loyalty card request: {request.data}")
-        user_id = request.data.get("user_id")
-
-        if not user_id:
-            logger.error("Missing user_id in create request")
-            return Response({"detail": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST)
-
+    @extend_schema(description="Получить изображение карты лояльности")
+    @action(detail=True, methods=['get'], url_path='card-image',
+            permission_classes=[IsBotAuthenticated | IsAuthenticated])
+    def loyalty_card_image(self, request, user__tg_id=None):
+        logger.info(f"Запрошено изображение карты для tg_id={user__tg_id}")
         try:
-            user = User.objects.get(tg_id=user_id)
-        except User.DoesNotExist:
-            logger.error(f"User with tg_id={user_id} not found")
-            return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        if LoyaltyCard.objects.filter(user=user).exists():
-            logger.info(f"Loyalty card already exists for tg_id={user_id}")
-            return Response(
-                {"detail": "У вас уже есть карта лояльности"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        serializer = self.get_serializer(data={"user": user.id})
-        serializer.is_valid(raise_exception=True)
-        card = LoyaltyCard(user=user)  # Явно задаем user
-        serializer.save(user=user)  # Передаем user в save
-        logger.info(f"Loyalty card created for tg_id={user_id}")
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    @extend_schema(description="Get the current user's loyalty card (TMA only)")
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
-    def my_card(self, request):
-        user = request.user
-        logger.info(f"Fetching loyalty card for tg_id={user.tg_id}")
-
-        card = LoyaltyCard.objects.filter(user=user).first()
-        if card:
-            serializer = self.get_serializer(card)
-            logger.info(f"Loyalty card found for tg_id={user.tg_id}")
-            return Response(serializer.data)
-        logger.warning(f"No loyalty card found for tg_id={user.tg_id}")
-        return Response({"detail": "Карта лояльности не найдена"}, status=status.HTTP_404_NOT_FOUND)
-
-    @extend_schema(description="Get the loyalty card image URL (bot or TMA)")
-    @action(detail=True, methods=['get'])
-    def image(self, request, user__tg_id=None):
-        logger.info(f"Fetching card image for tg_id={user__tg_id}")
-        try:
-            card = self.get_object()
+            card = self.get_object()  # Это автоматически получит карту по `lookup_field = user__tg_id`
         except LoyaltyCard.DoesNotExist:
-            logger.error(f"Loyalty card not found for tg_id={user__tg_id}")
+            logger.error(f"Карта лояльности не найдена для tg_id={user__tg_id}")
             return Response({"detail": "Карта лояльности не найдена"}, status=status.HTTP_404_NOT_FOUND)
 
-        if not card.card_image:
-            logger.warning(f"No card image for tg_id={user__tg_id}")
-            return Response({"detail": "Изображение карты не найдено"}, status=status.HTTP_404_NOT_FOUND)
-        logger.info(f"Card image found for tg_id={user__tg_id}")
-        return Response({"image_url": request.build_absolute_uri(card.card_image.url)})
+        try:
+            image = card.generate_card_image()
+        except Exception as e:
+            logger.error(f"Ошибка генерации изображения карты: {e}")
+            return Response({"detail": "Ошибка генерации изображения"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return HttpResponse(image.getvalue(), content_type='image/png')
 
     @extend_schema(description="Получить баланс карты лояльности")
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated | IsBotAuthenticated])
@@ -122,6 +83,66 @@ class LoyaltyCardViewSet(viewsets.ModelViewSet):
         logger.info(f"Balance fetched for tg_id={tg_id}: {balance}")
 
         return Response({"balance": balance}, status=status.HTTP_200_OK)
+
+    # @extend_schema(description="Create a loyalty card (bot only, requires user_id)")
+    # def create(self, request, *args, **kwargs):
+    #     logger.info(f"Create loyalty card request: {request.data}")
+    #     user_id = request.data.get("user_id")
+    #
+    #     if not user_id:
+    #         logger.error("Missing user_id in create request")
+    #         return Response({"detail": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+    #
+    #     try:
+    #         user = User.objects.get(tg_id=user_id)
+    #     except User.DoesNotExist:
+    #         logger.error(f"User with tg_id={user_id} not found")
+    #         return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+    #
+    #     if LoyaltyCard.objects.filter(user=user).exists():
+    #         logger.info(f"Loyalty card already exists for tg_id={user_id}")
+    #         return Response(
+    #             {"detail": "У вас уже есть карта лояльности"},
+    #             status=status.HTTP_400_BAD_REQUEST
+    #         )
+    #
+    #     serializer = self.get_serializer(data={"user": user.id})
+    #     serializer.is_valid(raise_exception=True)
+    #     card = LoyaltyCard(user=user)  # Явно задаем user
+    #     serializer.save(user=user)  # Передаем user в save
+    #     logger.info(f"Loyalty card created for tg_id={user_id}")
+    #     return Response(serializer.data, status=status.HTTP_201_CREATED)
+    #
+    # @extend_schema(description="Get the current user's loyalty card (TMA only)")
+    # @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    # def my_card(self, request):
+    #     user = request.user
+    #     logger.info(f"Fetching loyalty card for tg_id={user.tg_id}")
+    #
+    #     card = LoyaltyCard.objects.filter(user=user).first()
+    #     if card:
+    #         serializer = self.get_serializer(card)
+    #         logger.info(f"Loyalty card found for tg_id={user.tg_id}")
+    #         return Response(serializer.data)
+    #     logger.warning(f"No loyalty card found for tg_id={user.tg_id}")
+    #     return Response({"detail": "Карта лояльности не найдена"}, status=status.HTTP_404_NOT_FOUND)
+    #
+    # @extend_schema(description="Get the loyalty card image URL (bot or TMA)")
+    # @action(detail=True, methods=['get'])
+    # def image(self, request, user__tg_id=None):
+    #     logger.info(f"Fetching card image for tg_id={user__tg_id}")
+    #     try:
+    #         card = self.get_object()
+    #     except LoyaltyCard.DoesNotExist:
+    #         logger.error(f"Loyalty card not found for tg_id={user__tg_id}")
+    #         return Response({"detail": "Карта лояльности не найдена"}, status=status.HTTP_404_NOT_FOUND)
+    #
+    #     if not card.card_image:
+    #         logger.warning(f"No card image for tg_id={user__tg_id}")
+    #         return Response({"detail": "Изображение карты не найдено"}, status=status.HTTP_404_NOT_FOUND)
+    #     logger.info(f"Card image found for tg_id={user__tg_id}")
+    #     return Response({"image_url": request.build_absolute_uri(card.card_image.url)})
+
 
 
 class PointsTransactionViewSet(viewsets.ModelViewSet):
