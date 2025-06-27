@@ -44,8 +44,8 @@ class LoyaltyCard(models.Model):
         draw = ImageDraw.Draw(img)
 
         try:
-            font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'arial.ttf')
-            font_bold_path = os.path.join(os.path.dirname(__file__), 'fonts', 'arialbd.ttf')
+            font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'Roboto_Condensed-Light.ttf')
+            font_bold_path = os.path.join(os.path.dirname(__file__), 'fonts', 'Roboto_Condensed-Bold.ttf')
             font_large = ImageFont.truetype(font_path, 40)
             font_medium = ImageFont.truetype(font_path, 30)
             font_medium_bold = ImageFont.truetype(font_bold_path, 30)
