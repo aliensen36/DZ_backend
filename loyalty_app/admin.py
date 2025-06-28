@@ -8,6 +8,8 @@ from django.utils.html import format_html
 from .models import LoyaltyCard, PointsTransaction
 from django.contrib.auth import get_user_model
 
+from .views import LoyaltyCardViewSet
+
 User = get_user_model()
 
 
@@ -15,7 +17,8 @@ User = get_user_model()
 def admin_card_image_view(request, card_id):
     try:
         card = LoyaltyCard.objects.get(pk=card_id)
-        image = card.generate_card_image()
+        viewset = LoyaltyCardViewSet()
+        image = viewset.generate_card_image(card.user, card.card_number)  # Вызываем метод
         return HttpResponse(image.getvalue(), content_type='image/png')
     except LoyaltyCard.DoesNotExist:
         return HttpResponse("Карта не найдена", status=404)
@@ -89,16 +92,16 @@ class LoyaltyCardAdmin(admin.ModelAdmin):
         return format_html(
             '<div style="margin-bottom: 20px;">'
             '<h3>Превью карты лояльности</h3>'
-            '<img src="{}" style="max-width: 100%; border: 1px solid #ccc; padding: 5px;" />'
+            '<img src="{}" style="max-width: 50%; border: 1px solid #ccc; padding: 5px;" />'
             '</div>', url
         )
 
     card_image_preview.short_description = 'Превью карты'
 
     def regenerate_card_image(self, request, queryset):
+        viewset = LoyaltyCardViewSet()
         for card in queryset:
-            card.generate_card_image()
-            card.save()
+            image = viewset.generate_card_image(card.user, card.card_number)
         self.message_user(
             request,
             f"Изображения {queryset.count()} карт успешно перегенерированы"
