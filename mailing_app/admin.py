@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import Mailing
+from .models import Mailing, Subscription
+
 
 @admin.register(Mailing)
 class MailingAdmin(admin.ModelAdmin):
@@ -34,3 +35,18 @@ class MailingAdmin(admin.ModelAdmin):
             return format_html('<img src="{}" style="max-height: 50px;" />', obj.image)
         return "—"
     image_preview.short_description = 'Превью'
+
+
+@admin.register(Subscription)
+class SubscriptionAdmin(admin.ModelAdmin):
+    list_display = ('name', 'users_count')
+    search_fields = ('name',)
+    filter_horizontal = ('users',)
+    list_filter = ('name',)
+
+    def users_count(self, obj):
+       return obj.users.count()
+    users_count.short_description = 'Количество пользователей'
+
+    class Meta:
+        model = Subscription

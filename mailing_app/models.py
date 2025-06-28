@@ -27,7 +27,7 @@ class Subscription(models.Model):
     """Модель для хранения подписок пользователей"""
     name = models.CharField(max_length=255, unique=True, null=False, verbose_name='Наименование расслыки')
     description = models.TextField(null=True, blank=True, verbose_name='Описание подписки')
-    users = models.ManyToManyField(User, related_name='subscriptions')
+    users = models.ManyToManyField(User, related_name='subscriptions', blank=True)
 
     class Meta:
         verbose_name = 'Подписка'

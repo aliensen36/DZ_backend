@@ -1,13 +1,16 @@
+from django.conf import settings
+from PIL import Image, ImageDraw, ImageFont
+from io import BytesIO
+import os
+from django.db import models
 from django.http import HttpResponse
-from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import viewsets
 from user_app.auth.permissions import IsBotAuthenticated
 from .models import LoyaltyCard, PointsTransaction
-from .serializers import LoyaltyCardSerializer, PointsTransactionSerializer
+from .serializers import PointsTransactionSerializer
 from user_app.auth.permissions import IsResident
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse, OpenApiTypes, OpenApiExample
 
@@ -17,132 +20,127 @@ User = get_user_model()
 import logging
 logger = logging.getLogger(__name__)
 
-class LoyaltyCardViewSet(viewsets.ModelViewSet):
-    queryset = LoyaltyCard.objects.all()
-    serializer_class = LoyaltyCardSerializer
-    permission_classes = [IsBotAuthenticated | IsAuthenticated]
+class LoyaltyCardViewSet(viewsets.ViewSet):
+    permission_classes = [IsBotAuthenticated]
     lookup_field = "user__tg_id"
 
-    def get_queryset(self):
-        if getattr(self.request, 'user', None) and self.request.user.is_authenticated:
-            logger.info(f"Filtering queryset for user tg_id={self.request.user.tg_id}")
-            return self.queryset.filter(user=self.request.user)
-        logger.info("Returning full queryset for bot")
-        return self.queryset
+    def get_balance(self, user):
+        logger.debug(f"Calculating balance for user tg_id={user.tg_id}")
+        card = LoyaltyCard.objects.filter(user=user).first()
+        if not card:
+            logger.warning(f"No loyalty card found for user tg_id={user.tg_id}")
+            return 0
+        balance = PointsTransaction.objects.filter(card_id=card.id).aggregate(total=models.Sum('points'))['total'] or 0
+        logger.debug(f"Balance for user tg_id={user.tg_id}: {balance}")
+        return balance
 
-    @extend_schema(description="Получить изображение карты лояльности")
-    @action(detail=True, methods=['get'], url_path='card-image',
-            permission_classes=[IsBotAuthenticated | IsAuthenticated])
+    def generate_card_image(self, user, card_number):
+        cream_light = (255, 255, 230)
+        img = Image.new('RGB', (800, 500), color=cream_light)
+        draw = ImageDraw.Draw(img)
+
+        try:
+            font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'arial.ttf')
+            font_bold_path = os.path.join(os.path.dirname(__file__), 'fonts', 'arialbd.ttf')
+            font_large = ImageFont.truetype(font_path, 40)
+            font_medium = ImageFont.truetype(font_path, 30)
+            font_medium_bold = ImageFont.truetype(font_bold_path, 30)
+            font_small = ImageFont.truetype(font_path, 25)
+        except Exception as e:
+            logger.warning(f"Failed to load fonts, using default: {e}")
+            font_large = ImageFont.load_default()
+            font_medium = ImageFont.load_default()
+            font_medium_bold = ImageFont.load_default()
+            font_small = ImageFont.load_default()
+
+        logo_path = os.path.join(settings.MEDIA_ROOT, 'loyalty_cards', 'logo.png')
+        logo_y = 20
+        logo_x = 30
+        logo_height = 0
+        if os.path.exists(logo_path):
+            logo = Image.open(logo_path).convert("RGBA")
+            logo.thumbnail((150, 150), Image.Resampling.LANCZOS)
+            logo_height = logo.height
+            img.paste(logo, (logo_x, logo_y), logo)
+        else:
+            logger.warning(f"Логотип не найден по пути: {logo_path}")
+
+        first_name = getattr(user, 'user_first_name', None) or getattr(user, 'first_name', 'Не указано')
+        last_name = getattr(user, 'user_last_name', None) or getattr(user, 'last_name', 'Не указано')
+        balance = self.get_balance(user)
+
+        logo_title_spacing = 50
+        title_text = "Карта лояльности"
+        bbox_title = draw.textbbox((0, 0), title_text, font=font_large)
+        title_width = bbox_title[2] - bbox_title[0]
+        title_x = (img.width - title_width) // 2
+        title_y = logo_y + logo_height + logo_title_spacing
+        draw.text((title_x, title_y), title_text, font=font_large, fill=(0, 0, 0))
+
+        title_spacing = 50
+        base_y = title_y + bbox_title[3] - bbox_title[1] + title_spacing
+
+        full_name = f"{first_name} {last_name}"
+        line_spacing = 50
+        draw.text((50, base_y), full_name, font=font_medium, fill=(0, 0, 0))
+
+        bbox_name = draw.textbbox((0, 0), full_name, font=font_medium)
+        name_height = bbox_name[3] - bbox_name[1]
+        base_y += name_height + line_spacing
+
+        balance_prefix = "Баланс: "
+        balance_suffix = " баллов"
+        x_pos = 50
+        draw.text((x_pos, base_y), balance_prefix, font=font_medium, fill=(0, 0, 0))
+        prefix_width = draw.textbbox((0, 0), balance_prefix, font=font_medium)[2]
+        draw.text((x_pos + prefix_width, base_y), str(balance), font=font_medium_bold, fill=(0, 0, 0))
+        balance_width = draw.textbbox((0, 0), str(balance), font=font_medium_bold)[2]
+        draw.text((x_pos + prefix_width + balance_width, base_y), balance_suffix, font=font_medium, fill=(0, 0, 0))
+
+        card_number_text = f"№ {card_number}"
+        bbox_card = draw.textbbox((0, 0), card_number_text, font=font_small)
+        card_width = bbox_card[2] - bbox_card[0]
+        card_height = bbox_card[3] - bbox_card[1]
+        card_x = (img.width - card_width) // 2
+        card_y = img.height - card_height - 20
+        draw.text((card_x, card_y), card_number_text, font=font_small, fill=(0, 0, 0))
+
+        mascot_path = os.path.join(settings.MEDIA_ROOT, 'loyalty_cards', 'mascot.png')
+        if os.path.exists(mascot_path):
+            mascot = Image.open(mascot_path).convert("RGBA")
+            mascot.thumbnail((200, 200), Image.Resampling.LANCZOS)
+            mascot_width, mascot_height = mascot.size
+            mascot_x = img.width - mascot_width - 20
+            mascot_y = img.height - mascot_height - 20
+            img.paste(mascot, (mascot_x, mascot_y), mascot)
+        else:
+            logger.warning(f"Маскот не найден по пути: {mascot_path}")
+
+        buffer = BytesIO()
+        img.save(buffer, format='PNG')
+        buffer.seek(0)
+        return buffer
+
+    @action(detail=True, methods=['get'], url_path='card-image')
     def loyalty_card_image(self, request, user__tg_id=None):
         logger.info(f"Запрошено изображение карты для tg_id={user__tg_id}")
-        try:
-            card = self.get_object()  # Это автоматически получит карту по `lookup_field = user__tg_id`
-        except LoyaltyCard.DoesNotExist:
-            logger.error(f"Карта лояльности не найдена для tg_id={user__tg_id}")
-            return Response({"detail": "Карта лояльности не найдена"}, status=status.HTTP_404_NOT_FOUND)
+        user = User.objects.filter(tg_id=user__tg_id).first()
+        if not user:
+            logger.error(f"Пользователь с tg_id={user__tg_id} не найден")
+            return Response({"detail": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Проверяем, существует ли карта, и создаем, если отсутствует
+        card, created = LoyaltyCard.objects.get_or_create(user=user)
+        if created:
+            logger.info(f"Создана новая карта лояльности для tg_id={user__tg_id}")
 
         try:
-            image = card.generate_card_image()
+            image = self.generate_card_image(user, card.card_number)
         except Exception as e:
-            logger.error(f"Ошибка генерации изображения карты: {e}")
+            logger.error(f"Ошибка генерации изображения карты для tg_id={user__tg_id}: {e}")
             return Response({"detail": "Ошибка генерации изображения"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return HttpResponse(image.getvalue(), content_type='image/png')
-
-    @extend_schema(description="Получить баланс карты лояльности")
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated | IsBotAuthenticated])
-    def balance(self, request):
-        # Проверяем, аутентифицирован ли пользователь или это запрос от бота
-        if request.user.is_authenticated:
-            user = request.user
-            tg_id = user.tg_id
-        else:
-            # Если запрос от бота, получаем tg_id из параметров запроса
-            tg_id = request.query_params.get('tg_id')
-            if not tg_id:
-                return Response(
-                    {"detail": "Не указан tg_id в параметрах запроса"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            try:
-                user = User.objects.get(tg_id=tg_id)
-            except User.DoesNotExist:
-                return Response(
-                    {"detail": "Пользователь с указанным tg_id не найден"},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-
-        logger.info(f"Fetching balance for tg_id={tg_id}")
-
-        card = LoyaltyCard.objects.filter(user=user).first()
-        if not card:
-            return Response({"detail": "Карта лояльности не найдена"}, status=status.HTTP_404_NOT_FOUND)
-
-        # Получаем баланс
-        balance = card.get_balance()
-        logger.info(f"Balance fetched for tg_id={tg_id}: {balance}")
-
-        return Response({"balance": balance}, status=status.HTTP_200_OK)
-
-    # @extend_schema(description="Create a loyalty card (bot only, requires user_id)")
-    # def create(self, request, *args, **kwargs):
-    #     logger.info(f"Create loyalty card request: {request.data}")
-    #     user_id = request.data.get("user_id")
-    #
-    #     if not user_id:
-    #         logger.error("Missing user_id in create request")
-    #         return Response({"detail": "user_id is required"}, status=status.HTTP_400_BAD_REQUEST)
-    #
-    #     try:
-    #         user = User.objects.get(tg_id=user_id)
-    #     except User.DoesNotExist:
-    #         logger.error(f"User with tg_id={user_id} not found")
-    #         return Response({"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-    #
-    #     if LoyaltyCard.objects.filter(user=user).exists():
-    #         logger.info(f"Loyalty card already exists for tg_id={user_id}")
-    #         return Response(
-    #             {"detail": "У вас уже есть карта лояльности"},
-    #             status=status.HTTP_400_BAD_REQUEST
-    #         )
-    #
-    #     serializer = self.get_serializer(data={"user": user.id})
-    #     serializer.is_valid(raise_exception=True)
-    #     card = LoyaltyCard(user=user)  # Явно задаем user
-    #     serializer.save(user=user)  # Передаем user в save
-    #     logger.info(f"Loyalty card created for tg_id={user_id}")
-    #     return Response(serializer.data, status=status.HTTP_201_CREATED)
-    #
-    # @extend_schema(description="Get the current user's loyalty card (TMA only)")
-    # @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
-    # def my_card(self, request):
-    #     user = request.user
-    #     logger.info(f"Fetching loyalty card for tg_id={user.tg_id}")
-    #
-    #     card = LoyaltyCard.objects.filter(user=user).first()
-    #     if card:
-    #         serializer = self.get_serializer(card)
-    #         logger.info(f"Loyalty card found for tg_id={user.tg_id}")
-    #         return Response(serializer.data)
-    #     logger.warning(f"No loyalty card found for tg_id={user.tg_id}")
-    #     return Response({"detail": "Карта лояльности не найдена"}, status=status.HTTP_404_NOT_FOUND)
-    #
-    # @extend_schema(description="Get the loyalty card image URL (bot or TMA)")
-    # @action(detail=True, methods=['get'])
-    # def image(self, request, user__tg_id=None):
-    #     logger.info(f"Fetching card image for tg_id={user__tg_id}")
-    #     try:
-    #         card = self.get_object()
-    #     except LoyaltyCard.DoesNotExist:
-    #         logger.error(f"Loyalty card not found for tg_id={user__tg_id}")
-    #         return Response({"detail": "Карта лояльности не найдена"}, status=status.HTTP_404_NOT_FOUND)
-    #
-    #     if not card.card_image:
-    #         logger.warning(f"No card image for tg_id={user__tg_id}")
-    #         return Response({"detail": "Изображение карты не найдено"}, status=status.HTTP_404_NOT_FOUND)
-    #     logger.info(f"Card image found for tg_id={user__tg_id}")
-    #     return Response({"image_url": request.build_absolute_uri(card.card_image.url)})
-
 
 
 class PointsTransactionViewSet(viewsets.ModelViewSet):
