@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import viewsets
 from user_app.auth.permissions import IsBotAuthenticated
+from user_app.serializers import UserSerializer
 from .models import LoyaltyCard, PointsTransaction
 from .serializers import PointsTransactionSerializer
 from user_app.auth.permissions import IsResident
@@ -141,6 +142,72 @@ class LoyaltyCardViewSet(viewsets.ViewSet):
             return Response({"detail": "Ошибка генерации изображения"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return HttpResponse(image.getvalue(), content_type='image/png')
+
+    @action(detail=True, methods=['get'], url_path='card-number')
+    def card_number(self, request, user__tg_id=None):
+        logger.info(f"Запрошен номер карты для tg_id={user__tg_id}")
+        user = User.objects.filter(tg_id=user__tg_id).first()
+        if not user:
+            logger.error(f"Пользователь с tg_id={user__tg_id} не найден")
+            return Response({"detail": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Проверяем, существует ли карта, и создаем, если отсутствует
+        card, created = LoyaltyCard.objects.get_or_create(user=user)
+        if created:
+            logger.info(f"Создана новая карта лояльности для tg_id={user__tg_id}")
+
+        return Response({"card_number": card.card_number}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'], url_path='card-number/(?P<card_number>[0-9\s]+)')
+    def get_by_card_number(self, request, card_number=None):
+        logger.info(f"Fetching user by card_number={card_number}")
+        try:
+            # Нормализуем номер карты (с пробелом, например, "123 456")
+            card_number_clean = card_number.strip()
+            card = LoyaltyCard.objects.get(card_number=card_number_clean)
+            user = card.user
+            serializer = UserSerializer(user)
+            logger.info(f"Successfully fetched user by card_number={card_number}")
+            return Response(serializer.data)
+        except LoyaltyCard.DoesNotExist:
+            logger.warning(f"Card with card_number={card_number} not found")
+            return Response({"detail": "Карта не найдена"}, status=status.HTTP_404_NOT_FOUND)
+        except User.DoesNotExist:
+            logger.error(f"User associated with card_number={card_number} not found")
+            return Response({"detail": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=True, methods=['get'], url_path='card-id')
+    def card_id(self, request, user__tg_id=None):
+        logger.info(f"Запрошен ID карты для tg_id={user__tg_id}")
+        user = User.objects.filter(tg_id=user__tg_id).first()
+        if not user:
+            logger.error(f"Пользователь с tg_id={user__tg_id} не найден")
+            return Response({"detail": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Проверяем, существует ли карта, и создаем, если отсутствует
+        card, created = LoyaltyCard.objects.get_or_create(user=user)
+        if created:
+            logger.info(f"Создана новая карта лояльности для tg_id={user__tg_id}")
+
+        return Response({"card_id": card.id}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'], url_path='card-number/(?P<card_number>[0-9\s]+)')
+    def get_by_card_number(self, request, card_number=None):
+        logger.info(f"Fetching user by card_number={card_number}")
+        try:
+            # Нормализуем номер карты (с пробелом, например, "123 456")
+            card_number_clean = card_number.strip()
+            card = LoyaltyCard.objects.get(card_number=card_number_clean)
+            user = card.user
+            serializer = UserSerializer(user)
+            logger.info(f"Successfully fetched user by card_number={card_number}")
+            return Response(serializer.data)
+        except LoyaltyCard.DoesNotExist:
+            logger.warning(f"Card with card_number={card_number} not found")
+            return Response({"detail": "Карта не найдена"}, status=status.HTTP_404_NOT_FOUND)
+        except User.DoesNotExist:
+            logger.error(f"User associated with card_number={card_number} not found")
+            return Response({"detail": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
 
 
 class PointsTransactionViewSet(viewsets.ModelViewSet):

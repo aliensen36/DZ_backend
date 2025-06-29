@@ -10,5 +10,13 @@ loyalty_app_router.register(r'points-transactions', PointsTransactionViewSet, ba
 urlpatterns = [
     path('loyalty-cards/<int:user__tg_id>/card-image/', LoyaltyCardViewSet.as_view({'get': 'loyalty_card_image'}),
          name='loyalty-card-image'),
+    path('loyalty-cards/<int:user__tg_id>/card-number/', LoyaltyCardViewSet.as_view({'get': 'card_number'}),
+         name='loyalty-card-number'),
+    path('loyalty-cards/card-number/<str:card_number>/', LoyaltyCardViewSet.as_view({'get': 'get_by_card_number'}),
+         name='loyalty-card-by-number'),
+    path('loyalty-cards/<int:user__tg_id>/card-id/', LoyaltyCardViewSet.as_view({'get': 'card_id'}),
+         name='loyalty-card-id'),
+    path('loyalty-cards/card-number/<str:card_number>/', LoyaltyCardViewSet.as_view({'get': 'get_by_card_number'}),
+         name='loyalty-card-by-number'),
     path('', include(loyalty_app_router.urls))
 ]

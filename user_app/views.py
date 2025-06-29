@@ -1,6 +1,7 @@
 import logging
 from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets, mixins, status
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .auth.permissions import IsAdmin, IsBotAuthenticated
@@ -95,3 +96,19 @@ class UserViewSet(
         except User.DoesNotExist:
             logger.error(f"User with tg_id={tg_id} not found")
             return Response({"detail": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=False, methods=['get'], url_path='phone/(?P<phone_number>[0-9+]+)')
+    def get_by_phone(self, request, phone_number=None):
+        logger.info(f"Fetching user by phone_number={phone_number}")
+        try:
+            user = User.objects.get(phone_number=phone_number)
+            serializer = UserSerializer(user)
+            logger.info(f"Successfully fetched user by phone_number={phone_number}")
+            return Response(serializer.data)
+        except User.DoesNotExist:
+            logger.warning(f"User with phone_number={phone_number} not found")
+            return Response({"detail": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
+        except User.MultipleObjectsReturned:
+            logger.error(f"Multiple users found for phone_number={phone_number}")
+            return Response({"detail": "Найдено несколько пользователей с таким номером телефона"},
+                            status=status.HTTP_400_BAD_REQUEST)
