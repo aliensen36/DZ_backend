@@ -63,7 +63,7 @@ class LoyaltyCardAdmin(admin.ModelAdmin):
         'user__user_first_name',
         'user__user_last_name'
     )
-    readonly_fields = ('card_number', 'created_at', 'card_image_preview')  # Убрали card_image
+    readonly_fields = ('created_at', 'card_image_preview') # Временно убран card_number
 
     fieldsets = (
         ('Превью карты', {
