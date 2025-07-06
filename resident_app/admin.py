@@ -18,7 +18,7 @@ class ResidentAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Основная информация', {
-            'fields': ('name', 'categories', 'description')
+            'fields': ('user', 'name', 'categories', 'description')
         }),
         ('Контактные данные', {
             'fields': ('email', 'phone_number', 'official_website')
