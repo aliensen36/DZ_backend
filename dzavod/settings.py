@@ -39,6 +39,8 @@ BASE_CORS_ALLOWED_ORIGINS = [
     'https://design-zavod.tech',
 ]
 
+FRONTEND_BASE_URL = "https://design-zavod.tech"
+
 # Динамические origins из переменной окружения
 ENV_CORS_ALLOWED_ORIGINS = [
     origin.strip()
@@ -67,11 +69,13 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'drf_spectacular',
+    'django_celery_beat',
 
     'user_app.apps.UserAppConfig',
     'mailing_app.apps.MailingAppConfig',
     'loyalty_app.apps.LoyaltyAppConfig',
-    'resident_app.apps.ResidentAppConfig'
+    'resident_app.apps.ResidentAppConfig',
+    'event_app.apps.EventAppConfig',
 ]
 
 MIDDLEWARE = [
@@ -219,3 +223,4 @@ CSRF_TRUSTED_ORIGINS = [
     'https://design-zavod.tech'
 ]
 
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
