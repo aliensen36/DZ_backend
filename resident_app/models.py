@@ -16,7 +16,8 @@ class Category(models.Model):
 
 class Resident(models.Model):
     name = models.CharField(max_length=255, unique=True, verbose_name='Наименование')
-    description = models.TextField(verbose_name='Описание')
+    description = models.CharField(max_length=255, verbose_name='Описание')
+    info = models.TextField(verbose_name='Дополнительная информация')
     working_time = models.TextField(null=True, blank=True, verbose_name='График работы')
     email = models.EmailField(max_length=255, unique=True, blank=True, null=True, verbose_name='Email')
     phone_number = models.CharField(max_length=16, unique=True, blank=True, null=True, verbose_name='Номер телефона')
@@ -24,6 +25,7 @@ class Resident(models.Model):
     full_address = models.CharField(max_length=255, verbose_name='Полный адрес на территории завода')
     floor = models.IntegerField(verbose_name='Этаж')
     office = models.IntegerField(unique=True, verbose_name='Офис/Помещение')
+    photo = models.CharField(max_length=255, unique=True, verbose_name='Фото')
 
     categories = models.ManyToManyField(Category, related_name='residents')
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='resident')
