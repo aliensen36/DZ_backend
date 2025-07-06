@@ -2,7 +2,7 @@ from django.db import models
 
 class Event(models.Model):
     """Модель для представления мероприятий."""
-    title = models.CharField(max_length=255, verbose_name='Название мероприятия')
+    title = models.CharField(max_length=255, unique=True, verbose_name='Название мероприятия')
     description = models.CharField(max_length=255, verbose_name='Описание мероприятия')
     info = models.TextField(verbose_name='Дополнительная информация')
     start_date = models.DateTimeField(verbose_name='Начало мероприятия')
@@ -10,6 +10,10 @@ class Event(models.Model):
     location = models.CharField(max_length=255, verbose_name='Место проведения')
     photo = models.CharField(max_length=255, verbose_name='Фото мероприятия')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+
+    def preview(self):
+        """Возвращает превью мероприятия."""
+        return self.info[:255] + '...' if len(self.description) > 255 else self.info
 
     class Meta:
         verbose_name = 'Мероприятие'
