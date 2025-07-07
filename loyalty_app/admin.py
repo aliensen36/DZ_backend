@@ -34,7 +34,7 @@ class LoyaltyCardForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.instance and self.instance.user:
+        if self.instance and hasattr(self.instance, 'user') and self.instance.user:
             self.fields['user_first_name'].initial = getattr(self.instance.user, 'user_first_name', '')
             self.fields['user_last_name'].initial = getattr(self.instance.user, 'user_last_name', '')
 
