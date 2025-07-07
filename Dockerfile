@@ -20,4 +20,10 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 COPY . .
 RUN mkdir -p /app/media/loyalty_cards
 
-CMD ["sh", "-c", "python manage.py migrate loyalty_app zero || echo 'No migrations to rollback'; python manage.py makemigrations; python manage.py migrate; python manage.py runserver 0.0.0.0:8000"]
+CMD ["sh", "-c", "\
+    python manage.py migrate loyalty_app zero || echo 'No migrations to rollback'; \
+    python manage.py migrate resident_app zero || echo 'No migrations to rollback'; \
+    python manage.py makemigrations; \
+    python manage.py migrate; \
+    python manage.py runserver 0.0.0.0:8000 \
+"]
