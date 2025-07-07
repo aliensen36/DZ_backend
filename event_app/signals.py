@@ -15,10 +15,11 @@ def send_event_notification(sender, instance, created, **kwargs):
         users = subscription.users.all()
 
         text = (
-            f"🎉 {instance.title}\n\n"
+            f"🎉 **{instance.title}**\n"
+            f"{instance.description}\n\n"
+            f"📆 {instance.start_date.strftime('%d.%m.%Y %H:%M')}-{instance.end_date.strftime('%d.%m.%Y %H:%M')}\n\n"
             f"📍 {instance.location}\n"
-            f"🕒 {instance.start_date.strftime('%d.%m.%Y %H:%M')}-{instance.end_date.strftime('%d.%m.%Y %H:%M')}\n\n"
-            f"{instance.description}"
+            f"{instance.preview()}\n\n"
         )
 
         for user in users:
@@ -30,11 +31,15 @@ def send_event_notification(sender, instance, created, **kwargs):
                 tg_user_id=user.tg_id
             )
 
-            send_telegram_message(
-                user_id=user.tg_id,
-                text=text,
-                button_url=f"{FRONTEND_BASE_URL}/miniapp/events/{instance.id}"
-            )
+            if instance.photo:
+                send_telegram_message(
+                    image=instance.photo,
+                    user_id=user.tg_id,
+                    text=text,
+                    button_url=f"{FRONTEND_BASE_URL}/miniapp/events/{instance.id}",
+                )
+            else:
+                print(f"Изображение для события {instance.title} отсутствует.")
 
     except Subscription.DoesNotExist:
-        print("⚠️ Подписка 'Мероприятия' не найдена.")
+        print("Подписка 'Мероприятия' не найдена.")

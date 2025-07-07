@@ -11,14 +11,8 @@ from user_app.auth.permissions import IsAdmin, IsBotAuthenticated
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
+    permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
     
-    def get_permissions(self):
-        if self.request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
-            permission_classes = [IsAdmin]
-        else:
-            permission_classes = [IsAuthenticated | IsBotAuthenticated]
-        return [permission() for permission in permission_classes]
-
     def get_queryset(self):
         queryset = super().get_queryset()
         today_only = self.request.query_params.get('today')
