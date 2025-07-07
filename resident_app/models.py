@@ -29,7 +29,7 @@ class Resident(models.Model):
     pin_code = models.CharField(max_length=6, unique=True, verbose_name='Пин-код')
 
     categories = models.ManyToManyField(Category, related_name='residents', verbose_name='Категории')
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='resident', verbose_name='Пользователь')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True, null=True, related_name='resident', verbose_name='Пользователь')
 
     def __str__(self):
         return self.name
