@@ -19,9 +19,5 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY . .
 RUN mkdir -p /app/media/loyalty_cards
-
-CMD ["sh", "-c", "\
-    python manage.py makemigrations; \
-    python manage.py migrate; \
-    python manage.py runserver 0.0.0.0:8000 \
-"]
+#test
+CMD ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
