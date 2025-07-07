@@ -25,10 +25,11 @@ class Resident(models.Model):
     full_address = models.CharField(max_length=255, verbose_name='Полный адрес на территории завода')
     floor = models.IntegerField(verbose_name='Этаж')
     office = models.IntegerField(unique=True, verbose_name='Офис/Помещение')
-    photo = models.CharField(max_length=255, unique=True, verbose_name='Фото')
+    photo = models.ImageField(upload_to='residents/photos/', verbose_name='Фото')
+    pin_code = models.CharField(max_length=6, unique=True, verbose_name='Пин-код')
 
-    categories = models.ManyToManyField(Category, related_name='residents')
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='resident')
+    categories = models.ManyToManyField(Category, related_name='residents', verbose_name='Категории')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='resident', verbose_name='Пользователь')
 
     def __str__(self):
         return self.name
@@ -36,3 +37,16 @@ class Resident(models.Model):
     class Meta:
         verbose_name = 'Резидент'
         verbose_name_plural = 'Резиденты'
+
+    def save(self, *args, **kwargs):
+        if not self.pin_code:
+            self.pin_code = self._generate_pin_code()
+        super().save(*args, **kwargs)
+
+    def _generate_pin_code(self):
+        import random
+        import string
+        while True:
+            pin = ''.join(random.choices(string.digits, k=6))
+            if not Resident.objects.filter(pin_code=pin).exists():
+                return pin

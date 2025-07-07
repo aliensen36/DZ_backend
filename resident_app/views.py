@@ -2,6 +2,7 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.views import APIView
 
 from .models import Category, Resident
 from .serializers import ResidentSerializer, CategorySerializer
@@ -41,4 +42,19 @@ class ResidentViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
         return Response(serializer.data)
     
-    
+
+class PinCodeVerifyView(APIView):
+    def post(self, request):
+        pin_code = request.data.get('pin_code')
+        try:
+            resident = Resident.objects.get(pin_code=pin_code, is_admin=True)
+            serializer = ResidentSerializer(resident)
+            return Response({
+                'status': 'success',
+                'resident': serializer.data
+            }, status=status.HTTP_200_OK)
+        except Resident.DoesNotExist:
+            return Response({
+                'status': 'error',
+                'message': 'Неверный пин-код или пользователь не является администратором'
+            }, status=status.HTTP_401_UNAUTHORIZED)
