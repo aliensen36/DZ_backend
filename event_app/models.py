@@ -9,6 +9,7 @@ class Event(models.Model):
     end_date = models.DateTimeField(verbose_name='Окончание мероприятия')
     location = models.CharField(max_length=255, verbose_name='Место проведения')
     photo = models.CharField(max_length=255, verbose_name='Фото мероприятия')
+    url = models.URLField(max_length=255, verbose_name='Ссылка на регистрацию', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
 
     def preview(self):
