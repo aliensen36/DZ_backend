@@ -18,7 +18,8 @@ class EventAdmin(admin.ModelAdmin):
         'location',
         'is_active',
         'photo_preview_small',
-        'created_at'
+        'created_at',
+        'url',
     )
     list_display_links = ('title',)
     list_filter = ('start_date', 'end_date', 'location')
@@ -31,7 +32,7 @@ class EventAdmin(admin.ModelAdmin):
             'fields': ('title', 'description', 'info')
         }),
         ('Дата и место проведения', {
-            'fields': (('start_date', 'end_date'), 'location')
+            'fields': (('start_date', 'end_date'), 'location', 'url')
         }),
         ('Фото мероприятия', {
             'fields': ('photo', 'photo_preview')
