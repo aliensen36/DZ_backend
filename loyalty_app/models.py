@@ -53,3 +53,24 @@ class PointsTransaction(models.Model):
 
     def __str__(self):
         return f"{self.transaction_type.capitalize()} {self.points} баллов"
+    
+
+class Promotion(models.Model):
+    title = models.CharField(max_length=255, verbose_name='Название акции')
+    description = models.TextField(verbose_name='Описание акции')
+    start_date = models.DateTimeField(verbose_name='Дата начала акции')
+    end_date = models.DateTimeField(verbose_name='Дата окончания акции')
+    photo = models.CharField(max_length=255, verbose_name='Фото акции')
+    is_approved = models.BooleanField(default=False, verbose_name='Одобрена ли акция')
+    url = models.URLField(max_length=255, verbose_name='Ссылка на участие в акции')
+    discount_or_bonus = models.CharField(max_length=10, choices=[('скидка', 'Скидка'), ('бонус', 'Бонус')], verbose_name='Тип скидки или бонуса')
+    discount_or_bonus_value = models.FloatField(verbose_name='Значение скидки или бонуса', help_text='Введите значение скидки или бонуса, например 10% или 100 баллов')
+
+    resident = models.ForeignKey(Resident, on_delete=models.CASCADE, related_name='promotions', verbose_name='Резидент')
+
+    class Meta:
+        verbose_name = 'Акция'
+        verbose_name_plural = 'Акции'
+
+    def __str__(self):
+        return self.title

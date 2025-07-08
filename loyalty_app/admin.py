@@ -1,11 +1,13 @@
 from django import forms
+from django.db import models
 from django.contrib import admin
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse
 from django.urls import reverse
 from django.utils.html import format_html
-from .models import LoyaltyCard, PointsTransaction
+from django.forms import Textarea
+from .models import LoyaltyCard, PointsTransaction, Promotion
 from django.contrib.auth import get_user_model
 
 from .views import LoyaltyCardViewSet
@@ -195,3 +197,44 @@ class PointsTransactionAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         obj.points = form.cleaned_data['points']
         super().save_model(request, obj, form, change)
+
+
+@admin.register(Promotion)
+class PromotionAdmin(admin.ModelAdmin):
+    list_display = (
+        'title',
+        'resident',
+        'start_date',
+        'end_date',
+        'discount_or_bonus_display',
+        'is_approved',
+    )
+    list_filter = ('is_approved', 'discount_or_bonus', 'start_date', 'end_date')
+    search_fields = ('title', 'description', 'resident__name')
+    list_editable = ('is_approved',)
+
+    fieldsets = (
+        (None, {
+            'fields': ('title', 'description', 'photo')
+        }),
+        ('Даты', {
+            'fields': ('start_date', 'end_date')
+        }),
+        ('Условия участия', {
+            'fields': ('discount_or_bonus', 'discount_or_bonus_value', 'url')
+        }),
+        ('Привязка и статус', {
+            'fields': ('resident', 'is_approved')
+        }),
+    )
+
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows': 6, 'cols': 80})},
+    }
+
+    def discount_or_bonus_display(self, obj):
+        if obj.discount_or_bonus == 'скидка':
+            return f'{obj.discount_or_bonus_value}%'
+        else:
+            return f'{int(obj.discount_or_bonus_value)} бонусов'
+    discount_or_bonus_display.short_description = 'Скидка / Бонус'

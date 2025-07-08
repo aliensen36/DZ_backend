@@ -8,11 +8,11 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import viewsets
-from user_app.auth.permissions import IsBotAuthenticated
+from rest_framework.permissions import IsAuthenticated
+from user_app.auth.permissions import IsBotAuthenticated, IsResident, IsAdmin
 from user_app.serializers import UserSerializer
-from .models import LoyaltyCard, PointsTransaction
-from .serializers import PointsTransactionSerializer
-from user_app.auth.permissions import IsResident
+from .models import LoyaltyCard, PointsTransaction, Promotion
+from .serializers import PointsTransactionSerializer, PromotionSerializer
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse, OpenApiTypes, OpenApiExample
 
 from django.contrib.auth import get_user_model
@@ -362,3 +362,32 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
         serializer.save()
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+
+class PromotionViewSet(viewsets.ModelViewSet):
+    queryset = Promotion.objects.all()
+    serializer_class = PromotionSerializer
+    permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsResident)]
+
+    def get_queryset(self):
+        return super().get_queryset().filter(is_approved=True)
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'], permission_classes=[IsAdmin])
+    def approve(self, request, pk=None):
+        promotion = self.get_object()
+        promotion.is_approved = True
+        promotion.save()
+        return Response({'status': 'Акция подтверждена'})
