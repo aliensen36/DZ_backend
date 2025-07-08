@@ -10,7 +10,7 @@ User = get_user_model()
 
 class LoyaltyCard(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='loyalty_card', verbose_name='Пользователь')
-    card_number = models.CharField(max_length=15, unique=True, editable=True, verbose_name='Номер карты') # Временно editable=True
+    card_number = models.CharField(max_length=15, unique=True, verbose_name='Номер карты')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
 
     class Meta:

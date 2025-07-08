@@ -63,7 +63,7 @@ class LoyaltyCardAdmin(admin.ModelAdmin):
         'user__user_first_name',
         'user__user_last_name'
     )
-    readonly_fields = ('created_at', 'card_image_preview') # Временно убран card_number
+    readonly_fields = ('card_number', 'created_at', 'card_image_preview')
 
     fieldsets = (
         ('Превью карты', {
@@ -118,7 +118,7 @@ class LoyaltyCardAdmin(admin.ModelAdmin):
         if not change:
             if not obj.card_number:
                 obj.card_number = obj.generate_card_number()
-            obj.generate_card_image()
+            LoyaltyCardViewSet().generate_card_image(obj.user, obj.card_number)
         super().save_model(request, obj, form, change)
 
     def get_urls(self):
