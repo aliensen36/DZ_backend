@@ -1,7 +1,14 @@
 import requests
 import os
+import json
+import logging
+from django.conf import settings
 from dotenv import load_dotenv, find_dotenv
 
+# Настройка логирования
+logger = logging.getLogger(__name__)
+
+# Загрузка переменных окружения
 load_dotenv(find_dotenv())
 
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
@@ -9,8 +16,19 @@ SEND_MESSAGE_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessag
 SEND_PHOTO_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
 
 def send_telegram_message(user_id, text, button_url=None, image=None):
-    reply_markup = {}
+    """
+    Отправляет сообщение или фото в Telegram.
 
+    Args:
+        user_id (str or int): ID чата или пользователя в Telegram.
+        text (str): Текст сообщения или подпись к фото.
+        button_url (str, optional): URL для инлайн-кнопки.
+        image (django.db.models.fields.files.ImageField, optional): Объект ImageField.
+
+    Returns:
+        bool: True, если отправка успешна, False в случае ошибки.
+    """
+    reply_markup = {}
     if button_url:
         reply_markup = {
             "inline_keyboard": [
@@ -23,40 +41,38 @@ def send_telegram_message(user_id, text, button_url=None, image=None):
             ]
         }
 
+    response = None
     try:
-        if image:
-            # Если это file_id
-            if isinstance(image, str):
-                payload = {
-                    "chat_id": user_id,
-                    "caption": text,
-                    "photo": image,
-                    "reply_markup": reply_markup  # Кнопка для file_id
-                }
-                response = requests.post(SEND_PHOTO_URL, json=payload)
-            else:
-                # Если это изображение (например, из ImageField)
-                files = {'photo': open(image.path, 'rb')}  # Используем путь к файлу
-                payload = {
-                    "chat_id": user_id,
-                    "caption": text,
-                    "reply_markup": reply_markup  # Кнопка для файла
-                }
-                response = requests.post(SEND_PHOTO_URL, data=payload, files=files)
-                files['photo'].close()  # Закрываем файл после отправки
-        else:
+        if image and hasattr(image, 'path') and image.path:
+            # Отправка фото из ImageField
             payload = {
-                "chat_id": user_id,
+                "chat_id": str(user_id),
+                "caption": text,
+                "parse_mode": "HTML",
+                "reply_markup": json.dumps(reply_markup) if reply_markup else None
+            }
+            files = {'photo': open(image.path, 'rb')}
+            logger.info(f"Sending photo file to Telegram: chat_id={user_id}, file={image.path}")
+            response = requests.post(SEND_PHOTO_URL, data=payload, files=files)
+            files['photo'].close()
+        else:
+            # Отправка текстового сообщения
+            payload = {
+                "chat_id": str(user_id),
                 "text": text,
                 "parse_mode": "HTML",
-                "reply_markup": reply_markup
+                "reply_markup": json.dumps(reply_markup) if reply_markup else None
             }
+            logger.info(f"Sending text message to Telegram: chat_id={user_id}, text={text}")
             response = requests.post(SEND_MESSAGE_URL, json=payload)
 
-        print(f"Ответ Telegram: {response.status_code}, {response.text}")
+        logger.info(f"Telegram API response: status={response.status_code}, body={response.text}")
         response.raise_for_status()
+        return True
 
     except requests.exceptions.RequestException as e:
-        print(f"Ошибка при отправке сообщения Telegram: {e}")
-
-# Остальной код (signal) остается без изменений
+        logger.error(f"Ошибка при отправке сообщения Telegram: {e}, response={getattr(response, 'text', 'No response')}")
+        return False
+    except FileNotFoundError as e:
+        logger.error(f"Файл изображения не найден: {e}, image={image}")
+        return False
