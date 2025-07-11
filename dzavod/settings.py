@@ -30,10 +30,7 @@ ALLOWED_HOSTS = [
     'www.back.design-zavod.tech',
     'design-zavod.tech',
     'www.design-zavod.tech',
-    'b528c313d418.ngrok-free.app', # ngrok для разработки
 ] + os.getenv('ALLOWED_HOSTS', '').split()
-
-SITE_URL = 'https://b528c313d418.ngrok-free.app'  # Для локальной разработки
 
 # Основные доверенные origins (бек и фронт)
 BASE_CORS_ALLOWED_ORIGINS = [

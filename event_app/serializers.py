@@ -24,27 +24,12 @@ class EventSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Дата начала мероприятия не может быть в прошлом.")
 
         return data
-    
-    
-    # Для локальной разработки
+
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        if instance.photo:
-            # Используем SITE_URL для формирования публичного URL
-            photo_path = instance.photo.url 
-            photo_url = f"{settings.SITE_URL}{photo_path}"
-            representation['photo'] = photo_url
+        request = self.context.get('request')
+        if instance.photo and request:
+            representation['photo'] = request.build_absolute_uri(instance.photo.url)
         else:
             representation['photo'] = None
         return representation
-
-
-    # Для продакшена нужно раскомментировать следующий метод
-    # def to_representation(self, instance):
-    #     representation = super().to_representation(instance)
-    #     request = self.context.get('request')
-    #     if instance.photo and request:
-    #         representation['photo'] = request.build_absolute_uri(instance.photo.url)
-    #     else:
-    #         representation['photo'] = None
-    #     return representation
