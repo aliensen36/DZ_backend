@@ -8,7 +8,7 @@ class Event(models.Model):
     start_date = models.DateTimeField(verbose_name='Начало мероприятия')
     end_date = models.DateTimeField(verbose_name='Окончание мероприятия')
     location = models.CharField(max_length=255, verbose_name='Место проведения')
-    photo = models.CharField(max_length=255, verbose_name='Фото мероприятия')
+    photo = models.ImageField(upload_to='events/photos/', verbose_name='Фото мероприятия')
     url = models.URLField(max_length=255, verbose_name='Ссылка на регистрацию')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
 

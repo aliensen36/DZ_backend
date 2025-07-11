@@ -2,13 +2,17 @@ import datetime
 from rest_framework import serializers
 
 from .models import Event
+from django.conf import settings
 
 
 class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
-        fields = '__all__'
-
+        fields = ['id', 'title', 'description', 'info', 'start_date', 'end_date', 'location', 'photo', 'url', 'created_at']
+        extra_kwargs = {
+            'photo': {'required': True}
+        }
+        
     def validate(self, data):
         start = data.get('start_date')
         end = data.get('end_date')
@@ -20,3 +24,12 @@ class EventSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Дата начала мероприятия не может быть в прошлом.")
 
         return data
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        request = self.context.get('request')
+        if instance.photo and request:
+            representation['photo'] = request.build_absolute_uri(instance.photo.url)
+        else:
+            representation['photo'] = None
+        return representation

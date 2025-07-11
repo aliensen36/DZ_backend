@@ -17,9 +17,6 @@ class EventAdmin(admin.ModelAdmin):
         'date_range',
         'location',
         'is_active',
-        'photo_preview_small',
-        'created_at',
-        'url',
     )
     list_display_links = ('title',)
     list_filter = ('start_date', 'end_date', 'location')
@@ -55,13 +52,8 @@ class EventAdmin(admin.ModelAdmin):
         now = timezone.now()
         return obj.start_date <= now <= obj.end_date
 
-    @admin.display(description='Фото')
-    def photo_preview_small(self, obj):
-        if obj.photo:
-            return format_html('<img src="{}" style="height:40px;" />', obj.photo)
-        return '—'
-
     def photo_preview(self, obj):
-        if obj.photo:
-            return format_html('<img src="{}" style="max-height:200px;" />', obj.photo)
-        return 'Нет изображения'
+        if obj and obj.photo:
+            return format_html('<img src="{}" style="max-height: 200px;"/>', obj.photo.url)
+        return "Нет фото"
+    photo_preview.short_description = "Превью фото"

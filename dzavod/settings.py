@@ -29,9 +29,8 @@ ALLOWED_HOSTS = [
     'back.design-zavod.tech',
     'www.back.design-zavod.tech',
     'design-zavod.tech',
-    'www.design-zavod.tech'
+    'www.design-zavod.tech',
 ] + os.getenv('ALLOWED_HOSTS', '').split()
-
 
 # Основные доверенные origins (бек и фронт)
 BASE_CORS_ALLOWED_ORIGINS = [
@@ -162,6 +161,7 @@ STATIC_URL = 'static/'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
