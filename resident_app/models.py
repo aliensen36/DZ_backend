@@ -16,7 +16,7 @@ class Category(models.Model):
 
 class Resident(models.Model):
     name = models.CharField(max_length=255, unique=True, verbose_name='Наименование')
-    description = models.CharField(max_length=255, verbose_name='Описание')
+    description = models.TextField(max_length=255, verbose_name='Описание')
     info = models.TextField(verbose_name='Дополнительная информация')
     working_time = models.TextField(null=True, blank=True, verbose_name='График работы')
     email = models.EmailField(max_length=255, unique=True, blank=True, null=True, verbose_name='Email')

@@ -158,7 +158,7 @@ class LoyaltyCardViewSet(viewsets.ViewSet):
 
         return Response({"card_number": card.card_number}, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=['get'], url_path='card-number/(?P<card_number>[0-9\s]+)')
+    @action(detail=False, methods=['get'], url_path=r'card-number/(?P<card_number>[0-9\s]+)')
     def get_by_card_number(self, request, card_number=None):
         logger.info(f"Fetching user by card_number={card_number}")
         try:
@@ -191,7 +191,7 @@ class LoyaltyCardViewSet(viewsets.ViewSet):
 
         return Response({"card_id": card.id}, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=['get'], url_path='card-number/(?P<card_number>[0-9\s]+)')
+    @action(detail=False, methods=['get'], url_path=r'card-number/(?P<card_number>[0-9\s]+)')
     def get_by_card_number(self, request, card_number=None):
         logger.info(f"Fetching user by card_number={card_number}")
         try:
