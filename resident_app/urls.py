@@ -8,5 +8,5 @@ resident_app_router.register(r'residents', ResidentViewSet, basename='resident')
 
 
 urlpatterns = [
-    path('api/verify-pin/', PinCodeVerifyView.as_view(), name='verify_pin'),
+    path('verify-pin/', PinCodeVerifyView.as_view(), name='verify_pin'),
 ]

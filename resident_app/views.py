@@ -44,10 +44,11 @@ class ResidentViewSet(viewsets.ModelViewSet):
     
 
 class PinCodeVerifyView(APIView):
+    permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
     def post(self, request):
         pin_code = request.data.get('pin_code')
         try:
-            resident = Resident.objects.get(pin_code=pin_code, is_admin=True)
+            resident = Resident.objects.get(pin_code=pin_code)
             serializer = ResidentSerializer(resident)
             return Response({
                 'status': 'success',

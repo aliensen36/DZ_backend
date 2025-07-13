@@ -158,7 +158,7 @@ class LoyaltyCardViewSet(viewsets.ViewSet):
 
         return Response({"card_number": card.card_number}, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=['get'], url_path='card-number/(?P<card_number>[0-9\s]+)')
+    @action(detail=False, methods=['get'], url_path=r'card-number/(?P<card_number>[0-9\s]+)')
     def get_by_card_number(self, request, card_number=None):
         logger.info(f"Fetching user by card_number={card_number}")
         try:
@@ -191,7 +191,7 @@ class LoyaltyCardViewSet(viewsets.ViewSet):
 
         return Response({"card_id": card.id}, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=['get'], url_path='card-number/(?P<card_number>[0-9\s]+)')
+    @action(detail=False, methods=['get'], url_path=r'card-number/(?P<card_number>[0-9\s]+)')
     def get_by_card_number(self, request, card_number=None):
         logger.info(f"Fetching user by card_number={card_number}")
         try:
@@ -269,17 +269,21 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
         if price <= 0:
             return Response({'error': 'Сумма должна быть положительной'}, status=status.HTTP_400_BAD_REQUEST)
 
-        accrue_points = int(price) // 100  # 1 балл за каждые 100 рублей
-
+        accrue_points = int(price) // 100
         if accrue_points <= 0:
             return Response({'error': 'Недостаточно суммы для начисления баллов'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # ⚠️ Получаем resident_id из заголовка, а не тела запроса
+        resident_id = request.headers.get('X-Resident-ID')
+        if not resident_id:
+            return Response({'error': 'Не передан X-Resident-ID в заголовке'}, status=status.HTTP_400_BAD_REQUEST)
 
         transaction_data = {
             'price': price,
             'points': accrue_points,
             'transaction_type': 'начисление',
             'card_id': request.data.get('card_id'),
-            'resident_id': request.data.get('resident_id')
+            'resident_id': resident_id,
         }
 
         serializer = self.get_serializer(data=transaction_data)

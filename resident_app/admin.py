@@ -16,12 +16,13 @@ class ResidentAdmin(admin.ModelAdmin):
     search_fields = ('name', 'description', 'full_address', 'email', 'phone_number', 'pin_code')
     list_per_page = 20
     ordering = ('name',)
+    filter_horizontal = ('categories',)
 
     def get_fieldsets(self, request, obj=None):
         """Динамически добавляет photo_preview только при редактировании"""
         fieldsets = [
             ('Основная информация', {
-                'fields': ('user', 'name', 'categories', 'description', 'info')
+                'fields': ('name', 'categories', 'description', 'info')
             }),
             ('Контактные данные', {
                 'fields': ('email', 'phone_number', 'official_website')

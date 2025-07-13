@@ -26,6 +26,7 @@ urlpatterns = [
     path('', include('user_app.urls')),
     # path('api/', include('user_app.urls')),
     path('api/', include('loyalty_app.urls')),
+    path('api/', include('resident_app.urls')),
 ]
 
 if settings.DEBUG:
