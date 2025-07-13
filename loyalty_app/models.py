@@ -60,13 +60,17 @@ class Promotion(models.Model):
     description = models.TextField(verbose_name='Описание акции')
     start_date = models.DateTimeField(verbose_name='Дата начала акции')
     end_date = models.DateTimeField(verbose_name='Дата окончания акции')
-    photo = models.CharField(max_length=255, verbose_name='Фото акции')
+    photo = models.ImageField(upload_to='promotions/photos/', verbose_name='Фото акции')
     is_approved = models.BooleanField(default=False, verbose_name='Одобрена ли акция')
     url = models.URLField(max_length=255, verbose_name='Ссылка на участие в акции')
     discount_or_bonus = models.CharField(max_length=10, choices=[('скидка', 'Скидка'), ('бонус', 'Бонус')], verbose_name='Тип скидки или бонуса')
     discount_or_bonus_value = models.FloatField(verbose_name='Значение скидки или бонуса', help_text='Введите значение скидки или бонуса, например 10% или 100 баллов')
 
     resident = models.ForeignKey(Resident, on_delete=models.CASCADE, related_name='promotions', verbose_name='Резидент')
+
+    def preview(self):
+        """Возвращает превью акции."""
+        return self.description[:255] + '...' if len(self.description) > 255 else self.info
 
     class Meta:
         verbose_name = 'Акция'

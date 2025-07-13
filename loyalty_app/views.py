@@ -373,16 +373,27 @@ class PromotionViewSet(viewsets.ModelViewSet):
         return super().get_queryset().filter(is_approved=True)
     
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        if 'photo' not in request.FILES:
+            return Response({"photo": ["Фото мероприятия обязательно."]}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+        instance = serializer.save()
+        instance.photo = request.FILES['photo']
+        instance.save()
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer = self.get_serializer(instance, data=request.data, partial=True, context={'request': request})
         serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+        instance = serializer.save()
+
+        if 'photo' in request.FILES:
+            instance.photo = request.FILES['photo']
+            instance.save()
+
         return Response(serializer.data)
     
     @action(detail=True, methods=['post'], permission_classes=[IsAdmin])

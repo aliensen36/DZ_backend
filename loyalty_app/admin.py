@@ -213,9 +213,11 @@ class PromotionAdmin(admin.ModelAdmin):
     search_fields = ('title', 'description', 'resident__name')
     list_editable = ('is_approved',)
 
+    readonly_fields = ('photo_preview',)
+
     fieldsets = (
-        (None, {
-            'fields': ('title', 'description', 'photo')
+        ('Основная информация', {
+            'fields': ('title', 'description')
         }),
         ('Даты', {
             'fields': ('start_date', 'end_date')
@@ -225,6 +227,9 @@ class PromotionAdmin(admin.ModelAdmin):
         }),
         ('Привязка и статус', {
             'fields': ('resident', 'is_approved')
+        }),
+        ('Фото акции', {
+            'fields': ('photo', 'photo_preview')
         }),
     )
 
@@ -238,3 +243,9 @@ class PromotionAdmin(admin.ModelAdmin):
         else:
             return f'{int(obj.discount_or_bonus_value)} бонусов'
     discount_or_bonus_display.short_description = 'Скидка / Бонус'
+
+    def photo_preview(self, obj):
+        if obj and obj.photo:
+            return format_html('<img src="{}" style="max-height: 200px;"/>', obj.photo.url)
+        return "Нет фото"
+    photo_preview.short_description = "Превью фото"
