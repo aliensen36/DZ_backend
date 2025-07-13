@@ -21,7 +21,7 @@ class ResidentAdmin(admin.ModelAdmin):
         """Динамически добавляет photo_preview только при редактировании"""
         fieldsets = [
             ('Основная информация', {
-                'fields': ('user', 'name', 'categories', 'description', 'info')
+                'fields': ('name', 'categories', 'description', 'info')
             }),
             ('Контактные данные', {
                 'fields': ('email', 'phone_number', 'official_website')
