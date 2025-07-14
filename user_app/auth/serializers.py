@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+class CustomTokenObtainPairSerializer(serializers.Serializer):
     init_data = serializers.CharField()
 
     def validate(self, attrs):
@@ -16,11 +16,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         if not verify_telegram_init_data(init_data, settings.TELEGRAM_BOT_TOKEN):
             raise serializers.ValidationError('Invalid initData')
 
-        # Извлечение user_data из initData
         params = parse_qs(init_data)
         user_data = json.loads(params.get('user', ['{}'])[0])
 
-        # Создание/получение пользователя
         try:
             user = User.objects.get(tg_id=user_data['id'])
         except User.DoesNotExist:
@@ -29,14 +27,17 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 username=user_data.get('username'),
                 first_name=user_data.get('first_name', ''),
                 last_name=user_data.get('last_name', ''),
-                role='user'  # Роль по умолчанию
+                role='user'
             )
 
-        # Генерация токенов
-        data = {}
         refresh = self.get_token(user)
-        data['refresh'] = str(refresh)
-        data['access'] = str(refresh.access_token)
-        data['user_id'] = user.tg_id
-        data['role'] = user.role
-        return data
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'user_id': user.tg_id,
+            'role': user.role
+        }
+
+    @classmethod
+    def get_token(cls, user):
+        return super().get_token(user)
