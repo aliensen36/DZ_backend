@@ -23,15 +23,6 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     permission_classes = [AllowAny]
 
     @extend_schema(
-        parameters=[
-            OpenApiParameter(
-                name="init_data",
-                type=str,
-                location=OpenApiParameter.QUERY,
-                required=True,
-                description="Telegram initData for authentication",
-            )
-        ],
         responses={200: CustomTokenObtainPairSerializer},
         description="Obtain JWT access and refresh tokens using Telegram initData",
     )
