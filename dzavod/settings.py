@@ -36,6 +36,7 @@ ALLOWED_HOSTS = [
 BASE_CORS_ALLOWED_ORIGINS = [
     'https://back.design-zavod.tech',
     'https://design-zavod.tech',
+    'http://localhost:5173',  # Для тестирования фронта, потом убрать 
 ]
 
 FRONTEND_BASE_URL = "https://design-zavod.tech"

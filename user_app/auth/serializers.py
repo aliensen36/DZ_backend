@@ -1,14 +1,14 @@
 import json
 from rest_framework import serializers
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.conf import settings
 from urllib.parse import parse_qs
 from .telegram_utils import verify_telegram_init_data
 from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
 
-class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+class CustomTokenObtainPairSerializer(serializers.Serializer):
     init_data = serializers.CharField()
 
     def validate(self, attrs):
@@ -34,7 +34,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         # Генерация токенов
         data = {}
-        refresh = self.get_token(user)
+        refresh = RefreshToken.for_user(user)
         data['refresh'] = str(refresh)
         data['access'] = str(refresh.access_token)
         data['user_id'] = user.tg_id
