@@ -196,6 +196,7 @@ class PointsTransactionAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         obj.points = form.cleaned_data['points']
+        print("Saving transaction for resident:", obj.resident_id)
         super().save_model(request, obj, form, change)
 
 
