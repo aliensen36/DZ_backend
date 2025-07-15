@@ -403,16 +403,38 @@ class PromotionViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def partial_update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=request.data, partial=True, context={'request': request})
+            serializer.is_valid(raise_exception=True)
 
-        if 'photo' in request.FILES:
-            instance.photo = request.FILES['photo']
-            instance.save()
+            updated_fields = []
+            for field, value in serializer.validated_data.items():
+                if field != 'is_approved' and getattr(instance, field) != value:
+                    setattr(instance, field, value)
+                    updated_fields.append(field)
 
-        return Response(serializer.data)
+            if 'photo' in request.FILES:
+                instance.photo = request.FILES['photo']
+                updated_fields.append('photo')
+
+            if updated_fields:
+                instance.is_approved = False
+                updated_fields.append('is_approved')
+
+            if updated_fields:
+                instance.save(update_fields=updated_fields)
+                logger.info(f"Promotion {instance.id} updated with fields: {updated_fields}, is_approved set to False")
+            else:
+                logger.debug(f"No fields changed for promotion {instance.id}")
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Promotion.DoesNotExist:
+            logger.error(f"Promotion {kwargs.get('pk')} not found")
+            return Response({'error': 'Акция не найдена'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error updating promotion {kwargs.get('pk')}: {str(e)}")
+            return Response({'error': f'Ошибка при обновлении акции: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     @action(detail=True, methods=['post'], permission_classes=[IsAdmin | IsBotAuthenticated])
     def approve(self, request, pk=None):

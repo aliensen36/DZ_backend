@@ -70,7 +70,14 @@ class Promotion(models.Model):
 
     def preview(self):
         """Возвращает превью акции."""
-        return self.description[:255] + '...'
+        if len(self.description) > 255:
+            return self.description[:255] + '...'
+        return self.description
+    
+    # Сохраняет оригинальное значение поля при инициализации
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._original_is_approved = self.is_approved
 
     class Meta:
         verbose_name = 'Акция'
