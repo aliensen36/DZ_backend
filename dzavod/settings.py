@@ -48,11 +48,6 @@ ENV_CORS_ALLOWED_ORIGINS = [
     if origin.strip()
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-]
-
-
 # Объединенный список
 CORS_ALLOWED_ORIGINS = BASE_CORS_ALLOWED_ORIGINS + ENV_CORS_ALLOWED_ORIGINS
 
