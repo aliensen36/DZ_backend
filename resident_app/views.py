@@ -1,5 +1,5 @@
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
@@ -18,7 +18,8 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class ResidentViewSet(viewsets.ModelViewSet):
     queryset = Resident.objects.all()
     serializer_class = ResidentSerializer
-    permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
+    permission_classes = [AllowAny]
+    # permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
 
     def get_queryset(self):
         queryset = super().get_queryset()
