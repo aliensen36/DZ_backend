@@ -14,7 +14,7 @@ class Event(models.Model):
 
     def preview(self):
         """Возвращает превью мероприятия."""
-        return self.info[:255] + '...' if len(self.info) > 255 else self.info
+        return self.info[:255] + '...'
 
     class Meta:
         verbose_name = 'Мероприятие'
