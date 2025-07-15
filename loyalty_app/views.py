@@ -374,7 +374,21 @@ class PromotionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsResident)]
 
     def get_queryset(self):
-        return super().get_queryset().filter(is_approved=True)
+        queryset = super().get_queryset().filter(is_approved=True)
+        resident_id = self.request.query_params.get('resident')
+        if resident_id:
+            try:
+                queryset = queryset.filter(resident_id=int(resident_id))
+            except ValueError:
+                logger.error(f"Invalid resident_id in query parameter: {resident_id}")
+                queryset = queryset.none()
+        return queryset
+    
+    def get_object(self):
+        # Снимаем фильтр is_approved только для confirm/reject
+        if self.action in ["approve", "reject"]:
+            return Promotion.objects.get(pk=self.kwargs["pk"])
+        return super().get_object()
     
     def create(self, request, *args, **kwargs):
         if 'photo' not in request.FILES:
@@ -400,9 +414,51 @@ class PromotionViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data)
     
-    @action(detail=True, methods=['post'], permission_classes=[IsAdmin])
+    @action(detail=True, methods=['post'], permission_classes=[IsAdmin | IsBotAuthenticated])
     def approve(self, request, pk=None):
-        promotion = self.get_object()
-        promotion.is_approved = True
-        promotion.save()
-        return Response({'status': 'Акция подтверждена'})
+        """
+        Подтверждает акцию, устанавливая is_approved=True.
+        """
+        try:
+            promotion = self.get_object()
+            logger.debug(f"Approving promotion {promotion.id}, current is_approved={promotion.is_approved}")
+            promotion.is_approved = True
+            promotion.save(update_fields=['is_approved'])  # Указываем, что обновляется только is_approved
+            logger.info(f"Promotion {promotion.id} approved successfully, triggering post_save")
+            return Response({'status': 'Акция подтверждена'}, status=status.HTTP_200_OK)
+        except Promotion.DoesNotExist:
+            return Response(
+                {'error': 'Акция не найдена'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error approving promotion {pk}: {str(e)}")
+            return Response(
+                {'error': f'Ошибка при подтверждении акции: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAdmin | IsBotAuthenticated])
+    def reject(self, request, pk=None):
+        """
+        Отклоняет акцию, устанавливая is_approved=False и удаляет её из базы.
+        """
+        try:
+            promotion = self.get_object()
+            promotion.is_approved = False
+            promotion.save(update_fields=['is_approved'])  # Обновляем только статус
+
+            # Удаляем акцию из базы данных
+            promotion.delete()
+            
+            return Response({'status': 'Акция отклонена и удалена'}, status=status.HTTP_200_OK)
+        except Promotion.DoesNotExist:
+            return Response(
+                {'error': 'Акция не найдена'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Ошибка при отклонении акции: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

@@ -70,7 +70,7 @@ class Promotion(models.Model):
 
     def preview(self):
         """Возвращает превью акции."""
-        return self.description[:255] + '...' if len(self.description) > 255 else self.info
+        return self.description[:255] + '...'
 
     class Meta:
         verbose_name = 'Акция'

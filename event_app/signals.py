@@ -1,9 +1,12 @@
+import logging
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import Event
 from mailing_app.models import Mailing, Subscription
 from mailing_app.utils import send_telegram_message
 from dzavod.settings import FRONTEND_BASE_URL
+
+logger = logging.getLogger(__name__)
 
 @receiver(post_save, sender=Event)
 def send_event_notification(sender, instance, created, **kwargs):
@@ -22,7 +25,17 @@ def send_event_notification(sender, instance, created, **kwargs):
             f"{instance.preview()}\n\n"
         )
 
+        buttons = [
+            [
+                {
+                    "text": "Перейти к мероприятию",
+                    "web_app": {"url": f"{FRONTEND_BASE_URL}/miniapp/events/{instance.id}"}
+                }
+            ]
+        ]
+
         for user in users:
+            # Создаём запись в Mailing
             Mailing.objects.create(
                 text=text,
                 image=instance.photo,
@@ -31,15 +44,17 @@ def send_event_notification(sender, instance, created, **kwargs):
                 tg_user_id=user.tg_id
             )
 
-            if instance.photo:
-                send_telegram_message(
-                    image=instance.photo,
-                    user_id=user.tg_id,
-                    text=text,
-                    button_url=f"{FRONTEND_BASE_URL}/miniapp/events/{instance.id}",
-                )
+            # Отправляем уведомление
+            success = send_telegram_message(
+                user_id=user.tg_id,
+                text=text,
+                buttons=buttons,
+                image=instance.photo
+            )
+            if success:
+                logger.info(f"Уведомление о мероприятии {instance.id} ({instance.title}) отправлено пользователю {user.tg_id}")
             else:
-                print(f"Изображение для события {instance.title} отсутствует.")
+                logger.error(f"Не удалось отправить уведомление о мероприятии {instance.id} ({instance.title}) пользователю {user.tg_id}")
 
     except Subscription.DoesNotExist:
-        print("Подписка 'Мероприятия' не найдена.")
+        logger.error("Подписка 'Мероприятия' не найдена.")

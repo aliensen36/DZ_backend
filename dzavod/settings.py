@@ -39,7 +39,6 @@ SITE_URL = 'https://1f57aa2e603e.ngrok-free.app'  # Для локальной р
 BASE_CORS_ALLOWED_ORIGINS = [
     'https://back.design-zavod.tech',
     'https://design-zavod.tech',
-    'http://localhost:5173',  # Для тестирования фронта
 ]
 
 FRONTEND_BASE_URL = "https://design-zavod.tech"
