@@ -1,6 +1,8 @@
 from django.urls import path, include
 from rest_framework import routers
 from .views import PointsTransactionViewSet, LoyaltyCardViewSet, PromotionViewSet
+from django.conf import settings
+from django.conf.urls.static import static
 
 loyalty_app_router = routers.DefaultRouter()
 # loyalty_app_router.register(r'loyalty-cards', LoyaltyCardViewSet, basename='loyaltycard')
@@ -19,5 +21,5 @@ urlpatterns = [
          name='loyalty-card-id'),
     path('loyalty-cards/card-number/<str:card_number>/', LoyaltyCardViewSet.as_view({'get': 'get_by_card_number'}),
          name='loyalty-card-by-number'),
-    path('', include(loyalty_app_router.urls))
-]
+    path('', include(loyalty_app_router.urls)),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

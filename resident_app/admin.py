@@ -1,11 +1,22 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from .models import *
+from mailing_app.models import Subscription
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('name',)
     search_fields = ('name', 'description')
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+
+        # Автоматическое создание подписки, при создании категории
+        if not change: 
+            Subscription.objects.create(
+                name=obj.name,
+                description=obj.description
+            )
 
 
 @admin.register(Resident)

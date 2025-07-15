@@ -5,6 +5,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 
 from .models import Category, Resident
+from mailing_app.models import Subscription
 from .serializers import ResidentSerializer, CategorySerializer
 from user_app.auth.permissions import IsAdmin, IsBotAuthenticated
 
@@ -14,6 +15,18 @@ class CategoryViewSet(viewsets.ModelViewSet):
     serializer_class = CategorySerializer
     permission_classes = [AllowAny]
     # permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        category = serializer.save()
+
+        # Автоматическое создание подписки, при создании категории
+        Subscription.objects.create(
+            name=category.name,
+            description=category.description
+        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class ResidentViewSet(viewsets.ModelViewSet):
