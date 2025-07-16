@@ -13,8 +13,8 @@ from user_app.auth.permissions import IsAdmin, IsBotAuthenticated
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [AllowAny]
-    # permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
+    # permission_classes = [AllowAny]
+    permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -32,8 +32,8 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class ResidentViewSet(viewsets.ModelViewSet):
     queryset = Resident.objects.all()
     serializer_class = ResidentSerializer
-    permission_classes = [AllowAny]
-    # permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
+    # permission_classes = [AllowAny]
+    permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -42,13 +42,11 @@ class ResidentViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(categories__id=category_id)
         return queryset
 
-
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -59,8 +57,8 @@ class ResidentViewSet(viewsets.ModelViewSet):
     
 
 class PinCodeVerifyView(APIView):
-    permission_classes = [AllowAny]
-    # permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
+    # permission_classes = [AllowAny]
+    permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
     def post(self, request):
         pin_code = request.data.get('pin_code')
         try:
