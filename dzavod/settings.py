@@ -56,6 +56,8 @@ CORS_ALLOW_HEADERS = ["authorization",
                       "x-api-key",
                       ]
 
+CORS_ALLOW_CREDENTIALS = True
+
 SITE_ID = 1
 
 # Application definition
