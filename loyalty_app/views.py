@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from user_app.auth.permissions import IsBotAuthenticated, IsResident, IsAdmin
 from user_app.serializers import UserSerializer
 from .models import LoyaltyCard, PointsTransaction, Promotion
@@ -210,7 +210,7 @@ class LoyaltyCardViewSet(viewsets.ViewSet):
             return Response({"detail": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
 
 
-class PointsTransactionViewSet(viewsets.ModelViewSet):
+class PointsTransactionResidenrViewSet(viewsets.ModelViewSet):
     queryset = PointsTransaction.objects.all()
     serializer_class = PointsTransactionSerializer
     permission_classes = [IsBotAuthenticated | IsResident]
@@ -366,6 +366,28 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
         serializer.save()
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class PointsTransactionUserViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = PointsTransaction.objects.all()
+    serializer_class = PointsTransactionSerializer
+    permission_classes = [AllowAny] # Потом заменить на IsAuthenticated
+
+    def get_queryset(self):
+        tg_id = self.request.query_params.get('tg_id')
+
+        if not tg_id:
+            return PointsTransaction.objects.none()
+
+        try:
+            user = User.objects.get(tg_id=tg_id)
+        except User.DoesNotExist:
+            return PointsTransaction.objects.none()
+
+        if not hasattr(user, 'loyalty_card'):
+            return PointsTransaction.objects.none()
+
+        return PointsTransaction.objects.filter(card_id=user.loyalty_card)
     
 
 class PromotionViewSet(viewsets.ModelViewSet):

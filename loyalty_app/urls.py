@@ -1,12 +1,13 @@
 from django.urls import path, include
 from rest_framework import routers
-from .views import PointsTransactionViewSet, LoyaltyCardViewSet, PromotionViewSet
+from .views import PointsTransactionResidenrViewSet, PointsTransactionUserViewSet, LoyaltyCardViewSet, PromotionViewSet
 from django.conf import settings
 from django.conf.urls.static import static
 
 loyalty_app_router = routers.DefaultRouter()
 # loyalty_app_router.register(r'loyalty-cards', LoyaltyCardViewSet, basename='loyaltycard')
-loyalty_app_router.register(r'points-transactions', PointsTransactionViewSet, basename='points-transactions')
+loyalty_app_router.register(r'resident/points-transactions', PointsTransactionResidenrViewSet, basename='resident-points-transactions')
+loyalty_app_router.register(r'user/points-transactions', PointsTransactionUserViewSet, basename='user-points-transactions')
 loyalty_app_router.register(r'promotions', PromotionViewSet, basename='promotions')
 
 
