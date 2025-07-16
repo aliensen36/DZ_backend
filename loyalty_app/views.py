@@ -369,20 +369,11 @@ class PointsTransactionResidenrViewSet(viewsets.ModelViewSet):
 
 
 class PointsTransactionUserViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = PointsTransaction.objects.all()
     serializer_class = PointsTransactionSerializer
     permission_classes = [AllowAny] # Потом заменить на IsAuthenticated
 
     def get_queryset(self):
-        tg_id = self.request.query_params.get('tg_id')
-
-        if not tg_id:
-            return PointsTransaction.objects.none()
-
-        try:
-            user = User.objects.get(tg_id=tg_id)
-        except User.DoesNotExist:
-            return PointsTransaction.objects.none()
+        user = self.request.user
 
         if not hasattr(user, 'loyalty_card'):
             return PointsTransaction.objects.none()
