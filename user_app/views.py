@@ -129,6 +129,7 @@ class UserMeView(APIView):
             data["loyalty_card"] = {
                 "card_number": user.loyalty_card.card_number,
                 "created_at": user.loyalty_card.created_at,
+                "balance": user.loyalty_card.get_balance(),
             }
 
         return Response(data)

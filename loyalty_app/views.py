@@ -26,14 +26,12 @@ class LoyaltyCardViewSet(viewsets.ViewSet):
     lookup_field = "user__tg_id"
 
     def get_balance(self, user):
-        logger.debug(f"Calculating balance for user tg_id={user.tg_id}")
+        logger.debug(f"Get balance for user tg_id={user.tg_id}")
         card = LoyaltyCard.objects.filter(user=user).first()
         if not card:
             logger.warning(f"No loyalty card found for user tg_id={user.tg_id}")
             return 0
-        balance = PointsTransaction.objects.filter(card_id=card.id).aggregate(total=models.Sum('points'))['total'] or 0
-        logger.debug(f"Balance for user tg_id={user.tg_id}: {balance}")
-        return balance
+        return card.get_balance()
 
     def generate_card_image(self, user, card_number):
         cream_light = (255, 255, 230)
