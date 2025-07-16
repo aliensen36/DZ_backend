@@ -10,4 +10,4 @@ event_app_router.register(r'events', EventViewSet, basename='event')
 
 urlpatterns = [
     path('', include(event_app_router.urls)),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 

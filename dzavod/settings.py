@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     'loyalty_app.apps.LoyaltyAppConfig',
     'resident_app.apps.ResidentAppConfig',
     'event_app.apps.EventAppConfig',
+    'faq_app.apps.FaqAppConfig',
 ]
 
 MIDDLEWARE = [
