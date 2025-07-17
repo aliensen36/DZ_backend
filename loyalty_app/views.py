@@ -27,14 +27,12 @@ class LoyaltyCardViewSet(viewsets.ViewSet):
     lookup_field = "user__tg_id"
 
     def get_balance(self, user):
-        logger.debug(f"Calculating balance for user tg_id={user.tg_id}")
+        logger.debug(f"Get balance for user tg_id={user.tg_id}")
         card = LoyaltyCard.objects.filter(user=user).first()
         if not card:
             logger.warning(f"No loyalty card found for user tg_id={user.tg_id}")
             return 0
-        balance = PointsTransaction.objects.filter(card_id=card.id).aggregate(total=models.Sum('points'))['total'] or 0
-        logger.debug(f"Balance for user tg_id={user.tg_id}: {balance}")
-        return balance
+        return card.get_balance()
 
     def generate_card_image(self, user, card_number):
         cream_light = (255, 255, 230)
@@ -211,7 +209,7 @@ class LoyaltyCardViewSet(viewsets.ViewSet):
             return Response({"detail": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
 
 
-class PointsTransactionViewSet(viewsets.ModelViewSet):
+class PointsTransactionResidenrViewSet(viewsets.ModelViewSet):
     queryset = PointsTransaction.objects.all()
     serializer_class = PointsTransactionSerializer
     permission_classes = [AllowAny]  # Только в разработке
@@ -367,6 +365,19 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
         serializer.save()
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class PointsTransactionUserViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = PointsTransactionSerializer
+    permission_classes = [AllowAny] # Потом заменить на IsAuthenticated
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if not hasattr(user, 'loyalty_card'):
+            return PointsTransaction.objects.none()
+
+        return PointsTransaction.objects.filter(card_id=user.loyalty_card)
     
 
 class PromotionViewSet(viewsets.ModelViewSet):

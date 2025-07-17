@@ -15,7 +15,7 @@ def send_event_notification(sender, instance, created, **kwargs):
 
     try:
         subscription = Subscription.objects.get(name__iexact='Мероприятия')
-        users = subscription.users.all()
+        users = subscription.users.filter(enable_notifications=True)
 
         text = (
             f"🎉 **{instance.title}**\n"

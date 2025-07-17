@@ -98,7 +98,7 @@ def send_promotion_notification(sender, instance, created, **kwargs):
                 logger.warning(f"Subscription for category {category.name} not found")
                 continue
 
-            users = subscription.users.all()
+            users = subscription.users.filter(enable_notifications=True)
             if not users:
                 logger.warning(f"No users subscribed to category {category.name}")
                 continue

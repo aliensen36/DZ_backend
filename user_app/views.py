@@ -2,11 +2,12 @@ import logging
 from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from .auth.permissions import IsAdmin, IsBotAuthenticated
 from .serializers import UserSerializer
 from dotenv import load_dotenv
+from rest_framework.views import APIView
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -112,3 +113,31 @@ class UserViewSet(
             logger.error(f"Multiple users found for phone_number={phone_number}")
             return Response({"detail": "Найдено несколько пользователей с таким номером телефона"},
                             status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserMeView(APIView):
+    permission_classes = [AllowAny] # Потом заменить на IsAuthenticated
+
+    def get(self, request):
+        user = request.user
+        data = {
+            "user": UserSerializer(user).data,
+            "is_registered_in_loyalty": hasattr(user, 'loyalty_card'),
+        }
+
+        if hasattr(user, 'loyalty_card'):
+            data["loyalty_card"] = {
+                "card_number": user.loyalty_card.card_number,
+                "created_at": user.loyalty_card.created_at,
+                "balance": user.loyalty_card.get_balance(),
+            }
+
+        return Response(data)
+
+    def patch(self, request):
+        user = request.user
+        serializer = UserSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

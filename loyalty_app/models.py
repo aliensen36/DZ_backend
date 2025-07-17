@@ -19,6 +19,9 @@ class LoyaltyCard(models.Model):
 
     def __str__(self):
         return f'Карта {self.card_number} ({self.user})'
+    
+    def get_balance(self):
+        return PointsTransaction.objects.filter(card_id=self.id).aggregate(total=models.Sum('points'))['total'] or 0
 
     def generate_card_number(self):
         while True:
@@ -31,6 +34,7 @@ class LoyaltyCard(models.Model):
         if not self.card_number:
             self.card_number = self.generate_card_number()
         super().save(*args, **kwargs)
+
 
 
 TRANSACTION_TYPE =[
