@@ -28,7 +28,7 @@ class EventViewSet(viewsets.ModelViewSet):
         today = timezone.localdate()
         events = self.queryset.filter(
             Q(start_date__date=today) | Q(end_date__date=today)
-        )
+        ).order_by('-created_at')
         serializer = self.get_serializer(events, many=True)
         return Response(serializer.data)
 
@@ -40,7 +40,7 @@ class EventViewSet(viewsets.ModelViewSet):
         today = timezone.localdate()
         events = self.queryset.exclude(
             Q(start_date__date=today) | Q(end_date__date=today)
-        )
+        ).order_by('-created_at')
         serializer = self.get_serializer(events, many=True)
         return Response(serializer.data)
 
