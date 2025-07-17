@@ -76,6 +76,22 @@ class UserAvatarProgress(models.Model):
         avatar_stage = AvatarStage.objects.filter(avatar=self.avatar, stage=self.current_stage).first()
         return avatar_stage.default_img.url if avatar_stage else None
     
+    def check_for_upgrade(self):
+        """
+        Проверяет, нужно ли перевести аватар на следующую стадию
+        и переводит, если required_spending достигнут.
+        """
+        next_stage = (
+            Stage.objects
+            .filter(required_spending__gt=self.current_stage.required_spending)
+            .order_by('required_spending')
+            .first()
+        )
+
+        if next_stage and self.total_spending >= next_stage.required_spending:
+            self.current_stage = next_stage
+            self.save()
+    
 
 class AvatarOutfit(models.Model):
     avatar_stage = models.ForeignKey(AvatarStage, on_delete=models.CASCADE, related_name='outfits', verbose_name='Стадия аватара')

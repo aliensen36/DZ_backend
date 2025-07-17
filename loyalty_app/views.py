@@ -14,6 +14,7 @@ from user_app.serializers import UserSerializer
 from .models import LoyaltyCard, PointsTransaction, Promotion
 from .serializers import PointsTransactionSerializer, PromotionSerializer
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse, OpenApiTypes, OpenApiExample
+from avatar_app.models import UserAvatarProgress
 
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -272,10 +273,25 @@ class PointsTransactionResidenrViewSet(viewsets.ModelViewSet):
         if accrue_points <= 0:
             return Response({'error': 'Недостаточно суммы для начисления баллов'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # ⚠️ Получаем resident_id из заголовка, а не тела запроса
+        # Получаем resident_id из заголовка
         resident_id = request.headers.get('X-Resident-ID')
         if not resident_id:
             return Response({'error': 'Не передан X-Resident-ID в заголовке'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        card_id = request.data.get('card_id')
+        try:
+            card = LoyaltyCard.objects.select_related('user').get(id=card_id)
+        except LoyaltyCard.DoesNotExist:
+            return Response({'error': 'Карта лояльности не найдена'}, status=status.HTTP_404_NOT_FOUND)
+
+        user = card.user
+
+        # Обновляем прогресс аватара пользователя
+        user_avatar = UserAvatarProgress.objects.filter(user=user, is_active=True).first()
+        if user_avatar:
+            user_avatar.total_spending += price
+            user_avatar.save()
+            user_avatar.check_for_upgrade()
 
         transaction_data = {
             'price': price,

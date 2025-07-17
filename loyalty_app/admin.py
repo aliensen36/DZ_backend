@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.forms import Textarea
 from .models import LoyaltyCard, PointsTransaction, Promotion
+from avatar_app.models import UserAvatarProgress
 from django.contrib.auth import get_user_model
 
 from .views import LoyaltyCardViewSet
@@ -133,8 +134,6 @@ class LoyaltyCardAdmin(admin.ModelAdmin):
         return custom_urls + urls
 
 
-# --- PointsTransaction Admin ---
-
 class PointsTransactionForm(forms.ModelForm):
     class Meta:
         model = PointsTransaction
@@ -197,6 +196,17 @@ class PointsTransactionAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         obj.points = form.cleaned_data['points']
         super().save_model(request, obj, form, change)
+
+        # Эволюция аватара, при начислении
+        if obj.transaction_type == 'начисление':
+            user = obj.card_id.user
+            try:
+                progress = UserAvatarProgress.objects.get(user=user, is_active=True)
+            except UserAvatarProgress.DoesNotExist:
+                return
+
+            progress.total_spending += obj.price
+            progress.check_for_upgrade()
 
 
 @admin.register(Promotion)

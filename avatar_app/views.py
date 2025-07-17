@@ -20,8 +20,6 @@ class AvatarViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         """
         Эндпоинт для просмотра доступных аватаров.
-        GET /avatars/ — список аватаров (только стартовая стадия)
-        GET /avatars/{id}/ — подробности аватара (все стадии)
         """
         avatar_qs = Avatar.objects.all()
 
