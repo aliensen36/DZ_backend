@@ -80,6 +80,7 @@ INSTALLED_APPS = [
     'resident_app.apps.ResidentAppConfig',
     'event_app.apps.EventAppConfig',
     'faq_app.apps.FaqAppConfig',
+    'avatar_app.apps.AvatarAppConfig',
 ]
 
 MIDDLEWARE = [
