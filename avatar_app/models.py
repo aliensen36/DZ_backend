@@ -17,7 +17,7 @@ class Avatar(models.Model):
 class Stage(models.Model):
     name = models.CharField(max_length=255, verbose_name='Название стадии')
     description = models.TextField(verbose_name='Описание стадии')
-    required_spending = models.PositiveIntegerField(null=True, blank=True, verbose_name='Требуемая сумма трат')
+    required_spending = models.PositiveIntegerField(default=0, verbose_name='Требуемая сумма трат')
 
     class Meta:
         ordering = ['required_spending']

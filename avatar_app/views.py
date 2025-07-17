@@ -53,11 +53,16 @@ class AvatarViewSet(viewsets.ReadOnlyModelViewSet):
 
         if user_progress.exists():
             # Проверка стадии имеющихся аватаров пользователя
-            if not all(p.current_stage.required_spending is None for p in user_progress):
-                return Response(
-                    {'detail': 'Вы не можете выбрать новый аватар, пока не завершены текущие аватары (не достигнута последняя стадия)'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            for progress in user_progress:
+                next_stage = Stage.objects.filter(
+                    required_spending__gt=progress.current_stage.required_spending
+                ).order_by('required_spending').first()
+
+                if next_stage:
+                    return Response(
+                        {'detail': 'Вы не можете выбрать новый аватар, пока не завершены текущие аватары (не достигнута последняя стадия)'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
             # Проверка выбран ли аватар
             if user_progress.filter(avatar=avatar).exists():
                 return Response({'detail': 'Аватар уже выбран'}, status=status.HTTP_400_BAD_REQUEST)
