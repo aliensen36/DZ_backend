@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from user_app.auth.permissions import IsBotAuthenticated, IsResident, IsAdmin
 from user_app.serializers import UserSerializer
 from .models import LoyaltyCard, PointsTransaction, Promotion
@@ -22,7 +22,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 class LoyaltyCardViewSet(viewsets.ViewSet):
-    permission_classes = [IsBotAuthenticated]
+    permission_classes = [AllowAny]  # Только в разработке
+    # permission_classes = [IsBotAuthenticated]
     lookup_field = "user__tg_id"
 
     def get_balance(self, user):
@@ -213,7 +214,8 @@ class LoyaltyCardViewSet(viewsets.ViewSet):
 class PointsTransactionViewSet(viewsets.ModelViewSet):
     queryset = PointsTransaction.objects.all()
     serializer_class = PointsTransactionSerializer
-    permission_classes = [IsBotAuthenticated | IsResident]
+    permission_classes = [AllowAny]  # Только в разработке
+    # permission_classes = [IsBotAuthenticated | IsResident]
 
     def list(self, request):
         return Response({"detail": "Этот эндпоинт отключен."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -229,7 +231,6 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, pk=None):
         return Response({"detail": "Этот эндпоинт отключен."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
 
     @extend_schema(
         description="Метод для начисления баллов по сумме. 1 балл начисляется за каждые 100 рублей.",
@@ -371,7 +372,8 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
 class PromotionViewSet(viewsets.ModelViewSet):
     queryset = Promotion.objects.all()
     serializer_class = PromotionSerializer
-    permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsResident)]
+    permission_classes = [AllowAny]  # Только в разработке
+    # permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsResident)]
 
     def get_queryset(self):
         queryset = super().get_queryset().filter(is_approved=True)
