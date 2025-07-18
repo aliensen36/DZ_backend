@@ -347,7 +347,7 @@ class PointsTransactionResidenrViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Сумма должна быть положительной.'}, status=status.HTTP_400_BAD_REQUEST)
 
         card_id = request.data.get('card_id')
-        resident_id = request.data.get('resident_id')
+        resident_id = request.headers.get('X-Resident-ID')
 
         if not card_id or not resident_id:
             return Response({'error': 'Необходимо указать ID карты и ID резидента.'}, status=status.HTTP_400_BAD_REQUEST)
