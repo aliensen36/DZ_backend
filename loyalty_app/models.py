@@ -49,7 +49,7 @@ class PointsTransaction(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата транзакции')
 
     card_id = models.ForeignKey(LoyaltyCard, on_delete=models.CASCADE, related_name='transactions')
-    resident_id = models.ForeignKey(Resident, on_delete=models.CASCADE, related_name='transactions')
+    resident_id = models.ForeignKey(Resident, on_delete=models.CASCADE, related_name='transactions', null=True, blank=True)
 
     class Meta:
         verbose_name = 'Транзакция баллов'

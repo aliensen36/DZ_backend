@@ -5,7 +5,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.db.models import Prefetch
 
-from .models import Avatar, UserAvatarProgress, Stage, AvatarStage
+from .models import Avatar, UserAvatarProgress, Stage, AvatarStage, AvatarOutfit, OutfitPurchase
+from loyalty_app.models import PointsTransaction
 from .serializers import AvatarSerializer, AvatarDetailSerializer, UserAvatarProgressSerializer
 
 
@@ -112,3 +113,150 @@ class UserAvatarProgressViewSet(viewsets.ReadOnlyModelViewSet):
         selected.save()
 
         return Response({'detail': f"Аватар '{selected.avatar.name}' выбран как активный"})
+    
+
+class AvatarShopViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def get_active_avatar_and_stage(self, user):
+        """
+        Возвращает активный прогресс и стадию аватара пользователя.
+        """
+        active_progress = UserAvatarProgress.objects.filter(
+            user=user,
+            is_active=True
+        ).select_related('avatar', 'current_stage').first()
+
+        if not active_progress:
+            return None, None
+
+        avatar_stage = AvatarStage.objects.filter(
+            avatar=active_progress.avatar,
+            stage=active_progress.current_stage
+        ).first()
+
+        if not avatar_stage:
+            return None, None
+
+        return active_progress, avatar_stage
+
+    @action(detail=False, methods=['get'], url_path='outfits')
+    def outfits_list(self, request):
+        """
+        Возвращает одежду (купленная и еще не купленная).
+        """
+        user = request.user
+        balance = user.loyalty_card.get_balance() if hasattr(user, 'loyalty_card') else 0
+
+        active_progress, avatar_stage = self.get_active_avatar_and_stage(user)
+        if not active_progress or not avatar_stage:
+            return Response({'detail': 'Активный аватар или его стадия не найдены.'}, status=400)
+
+        outfits = AvatarOutfit.objects.filter(
+            avatar_stage=avatar_stage
+        ).prefetch_related('custom_animations')
+
+        purchased_ids = set(
+            OutfitPurchase.objects.filter(user=user, outfit__avatar_stage=avatar_stage)
+            .values_list('outfit_id', flat=True)
+        )
+
+        purchased = []
+        available = []
+
+        for outfit in outfits:
+            item = {
+                'id': outfit.id,
+                'preview': outfit.outfit.url,
+                'price': outfit.price,
+                'can_afford': balance >= outfit.price,
+            }
+            if outfit.id in purchased_ids:
+                purchased.append(item)
+            else:
+                available.append(item)
+
+        return Response({
+            'purchased': purchased,
+            'available': available
+        })
+
+    @action(detail=True, methods=['post'], url_path='buy')
+    def buy(self, request, pk=None):
+        """
+        Покупка аутфита по ID (pk).
+        """
+        user = request.user
+        if not hasattr(user, 'loyalty_card'):
+            return Response({'detail': 'У вас нет карты лояльности.'}, status=400)
+
+        outfit = self.get_object()
+        balance = user.loyalty_card.get_balance()
+
+        if OutfitPurchase.objects.filter(user=user, outfit=outfit).exists():
+            return Response({'detail': 'Вы уже приобрели этот аутфит.'}, status=400)
+
+        if balance < outfit.price:
+            return Response({
+                'detail': f'Недостаточно баллов. Баланс: {balance}, требуется: {outfit.price}'
+            }, status=400)
+
+        PointsTransaction.objects.create(
+            points=-outfit.price,
+            price=outfit.price,
+            transaction_type='списание',
+            card_id=user.loyalty_card,
+            resident_id=None
+        )
+
+        purchase = OutfitPurchase.objects.create(user=user, outfit=outfit)
+
+        return Response({
+            'detail': f'Успешная покупка аутфита #{purchase.outfit.id}. Списано: {outfit.price} баллов.'
+        })
+
+    @action(detail=True, methods=['post'], url_path='wear')
+    def wear(self, request, pk=None):
+        """
+        Надеть аутфит по ID (pk).
+        """
+        user = request.user
+        outfit = self.get_object()
+
+        active_progress, avatar_stage = self.get_active_avatar_and_stage(user)
+        if not active_progress or not avatar_stage:
+            return Response({'detail': 'Активный аватар или его стадия не найдены.'}, status=400)
+
+        if outfit.avatar_stage != avatar_stage:
+            return Response({'detail': 'Аутфит не принадлежит текущей стадии активного аватара.'}, status=400)
+
+        if not OutfitPurchase.objects.filter(user=user, outfit=outfit).exists():
+            return Response({'detail': 'Сначала необходимо приобрести аутфит.'}, status=400)
+
+        active_progress.current_outfit = outfit
+        active_progress.save(update_fields=['current_outfit'])
+
+        return Response({'detail': f"Аватар '{active_progress.avatar.name}' успешно переодет."})
+
+    @action(detail=True, methods=['post'], url_path='undress')
+    def undress(self, request, pk=None):
+        """
+        Снимает одежду с активного аватара (по ID аватара).
+        """
+        user = request.user
+        avatar = self.get_object()
+
+        active_progress = UserAvatarProgress.objects.filter(
+            user=user, is_active=True, avatar=avatar
+        ).first()
+
+        if not active_progress:
+            return Response({'detail': 'Активный аватар не выбран или ID не совпадает.'}, status=400)
+
+        if not active_progress.current_outfit:
+            return Response({'detail': 'На аватаре нет одежды.'}, status=400)
+
+        active_progress.current_outfit = None
+        active_progress.save(update_fields=['current_outfit'])
+
+        return Response({'detail': f'Одежда с аватара "{avatar.name}" успешно снята.'})

@@ -50,6 +50,7 @@ class UserAvatarDetailSerializer(serializers.ModelSerializer):
     avatar = AvatarDetailSerializer()
     current_stage = StageSerializer()
     current_image = serializers.SerializerMethodField()
+    current_animation = serializers.SerializerMethodField()
     next_required_spending = serializers.SerializerMethodField()
 
     class Meta:
@@ -58,6 +59,9 @@ class UserAvatarDetailSerializer(serializers.ModelSerializer):
 
     def get_current_image(self, obj):
         return obj.get_current_image()
+    
+    def get_current_animation(self, obj):
+        return obj.get_current_animations()
 
     def get_next_required_spending(self, obj):
         next_stage = (

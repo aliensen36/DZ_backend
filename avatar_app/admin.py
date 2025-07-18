@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Avatar, Stage, AvatarStage, Animation, UserAvatarProgress, AvatarOutfit
+from .models import Avatar, Stage, AvatarStage, Animation, UserAvatarProgress, AvatarOutfit, OutfitPurchase
 
 @admin.register(Avatar)
 class AvatarAdmin(admin.ModelAdmin):
@@ -171,3 +171,23 @@ class AvatarOutfitAdmin(admin.ModelAdmin):
             return format_html('<img src="{}" style="max-height: 200px;"/>', obj.custom_img.url)
         return "Нет изображения"
     custom_img_preview.short_description = "Превью аватара в одежде"
+
+@admin.register(OutfitPurchase)
+class OutfitPurchaseAdmin(admin.ModelAdmin):
+    list_display = ('user', 'avatar_name', 'stage_name', 'outfit', 'purchased_at')
+    list_filter = ('purchased_at', 'outfit__avatar_stage__avatar', 'outfit__avatar_stage__stage')
+    search_fields = (
+        'user__username',
+        'outfit__avatar_stage__avatar__name',
+        'outfit__avatar_stage__stage__name',
+    )
+    ordering = ('-purchased_at',)
+    date_hierarchy = 'purchased_at'
+
+    def avatar_name(self, obj):
+        return obj.outfit.avatar_stage.avatar.name
+    avatar_name.short_description = "Аватар"
+
+    def stage_name(self, obj):
+        return obj.outfit.avatar_stage.stage.name
+    stage_name.short_description = "Стадия"

@@ -76,6 +76,11 @@ class UserAvatarProgress(models.Model):
         avatar_stage = AvatarStage.objects.filter(avatar=self.avatar, stage=self.current_stage).first()
         return avatar_stage.default_img.url if avatar_stage else None
     
+    def get_current_animations(self):
+        if self.current_outfit:
+            return self.current_outfit.custom_animations.all()
+        return Animation.objects.filter(avatar_stage__avatar=self.avatar, avatar_stage__stage=self.current_stage)
+    
     def check_for_upgrade(self):
         """
         Проверяет, нужно ли перевести аватар на следующую стадию
@@ -106,3 +111,15 @@ class AvatarOutfit(models.Model):
 
     def __str__(self):
         return f"Одежда #{self.id} для {self.avatar_stage} за {self.price} баллов"
+    
+
+class OutfitPurchase(models.Model):
+    "Для фиксации покупок пользователя"
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='outfit_purchases', verbose_name='Пользователь')
+    outfit = models.ForeignKey(AvatarOutfit, on_delete=models.CASCADE, related_name='outfit_purchases', verbose_name='Комплект одежды')
+    purchased_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'outfit')
+        verbose_name = 'Покупка одежды'
+        verbose_name_plural = 'Покупки одежды'
