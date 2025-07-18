@@ -7,7 +7,7 @@ from user_app.views import UserViewSet, UserMeViewSet, UserAvatarProgressViewSet
 
 user_app_router = DefaultRouter()
 user_app_router.register(r'users', UserViewSet, basename='user')
-user_app_router.register(r'user/me', UserMeViewSet, basename='user-me')
+user_app_router.register(r'user', UserMeViewSet, basename='user-me')
 user_app_router.register(r'user/avatars', UserAvatarProgressViewSet, basename='user-avatars')
 
 urlpatterns = [
