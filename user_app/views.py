@@ -120,12 +120,13 @@ class UserViewSet(
 
 
 class UserMeViewSet(viewsets.ViewSet):
-    permission_classes = [AllowAny]  # Потом заменить на IsAuthenticated
+    permission_classes = [AllowAny] # Потом поменять на IsAuthenticated
 
-    def retrieve(self, request, pk=None):
+    @action(detail=False, methods=['get'], url_path='me')
+    def me(self, request):
         """
         Возвращает текущего пользователя и его активный аватар (если выбран),
-        а также информацию о карте лояльности (если зарегистрирова).
+        а также информацию о карте лояльности (если зарегистрирован).
         """
         user = request.user
 
@@ -134,7 +135,6 @@ class UserMeViewSet(viewsets.ViewSet):
             "is_registered_in_loyalty": hasattr(user, 'loyalty_card'),
         }
 
-        # Лояльность
         if hasattr(user, 'loyalty_card'):
             data["loyalty_card"] = {
                 "card_number": user.loyalty_card.card_number,
@@ -142,7 +142,6 @@ class UserMeViewSet(viewsets.ViewSet):
                 "balance": user.loyalty_card.get_balance(),
             }
 
-        # Текущий аватар (если есть)
         user_avatar = (
             UserAvatarProgress.objects
             .filter(user=user, is_active=True)
@@ -151,16 +150,14 @@ class UserMeViewSet(viewsets.ViewSet):
             .first()
         )
 
-        if user_avatar:
-            data["avatar"] = UserAvatarDetailSerializer(user_avatar).data
-        else:
-            data["avatar"] = None
+        data["avatar"] = UserAvatarDetailSerializer(user_avatar).data if user_avatar else None
 
         return Response(data)
 
-    def partial_update(self, request, pk=None):
+    @action(detail=False, methods=['patch'], url_path='me/update')
+    def update_me(self, request):
         """
-        Позволяет частично обновить данные пользователя.
+        Частично обновляет данные текущего пользователя.
         """
         user = request.user
         serializer = UserSerializer(user, data=request.data, partial=True)

@@ -28,6 +28,10 @@ class EventViewSet(viewsets.ModelViewSet):
         events = self.queryset.filter(
             Q(start_date__date=today) | Q(end_date__date=today)
         ).order_by('-created_at')
+
+        if not events.exists():
+            return Response({'detail': 'На сегодня мероприятий нет.'}, status=status.HTTP_204_NO_CONTENT)
+        
         serializer = self.get_serializer(events, many=True)
         return Response(serializer.data)
 
@@ -40,6 +44,10 @@ class EventViewSet(viewsets.ModelViewSet):
         events = self.queryset.exclude(
             Q(start_date__date=today) | Q(end_date__date=today)
         ).order_by('-created_at')
+
+        if not events.exists():
+            return Response({'detail': 'Все мероприятия проходят сегодня.'}, status=status.HTTP_204_NO_CONTENT)
+    
         serializer = self.get_serializer(events, many=True)
         return Response(serializer.data)
 
