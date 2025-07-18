@@ -26,9 +26,8 @@ class EventViewSet(viewsets.ModelViewSet):
         """
         today = timezone.localdate()
         events = self.queryset.filter(
-            Q(start_date__date=today) | Q(end_date__date=today)
+            Q(start_date__date__lte=today) & Q(end_date__date__gte=today)
         ).order_by('-created_at')
-
         if not events.exists():
             return Response({'detail': 'На сегодня мероприятий нет.'}, status=status.HTTP_204_NO_CONTENT)
         
@@ -41,8 +40,8 @@ class EventViewSet(viewsets.ModelViewSet):
         Возвращает мероприятия, которые НЕ проходят сегодня.
         """
         today = timezone.localdate()
-        events = self.queryset.exclude(
-            Q(start_date__date=today) | Q(end_date__date=today)
+        events = self.queryset.filter(
+            Q(start_date__date__lte=today) & Q(end_date__date__gte=today)
         ).order_by('-created_at')
 
         if not events.exists():
