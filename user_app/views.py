@@ -156,7 +156,7 @@ class UserMeViewSet(viewsets.ViewSet):
 
         return Response(data)
 
-    @action(detail=False, methods=['patch'], url_path='update')
+    @action(detail=False, methods=['patch'], url_path='me/update')
     def update_me(self, request):
         """
         Частично обновляет данные текущего пользователя.
@@ -170,7 +170,7 @@ class UserMeViewSet(viewsets.ViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    @action(detail=False, methods=['get'], url_path='referral-link')
+    @action(detail=False, methods=['get'], url_path='me/referral-link')
     def referral_link(self, request):
         """
         Возвращает персональную реферальную ссылку текущего пользователя.
