@@ -18,6 +18,8 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 
 BOT_API_KEY = os.getenv('BOT_API_KEY')
 
+TELEGRAM_BOT_USERNAME = os.getenv('TELEGRAM_BOT_USERNAME')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 

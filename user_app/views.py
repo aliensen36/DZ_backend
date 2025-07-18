@@ -7,10 +7,12 @@ from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
 from .auth.permissions import IsAdmin, IsBotAuthenticated
 from dotenv import load_dotenv
+from django.conf import settings
 
 from .serializers import UserSerializer
 from avatar_app.serializers import UserAvatarProgressSerializer, UserAvatarDetailSerializer
 from avatar_app.models import UserAvatarProgress
+from .models import Referral
 
 
 load_dotenv()
@@ -154,7 +156,7 @@ class UserMeViewSet(viewsets.ViewSet):
 
         return Response(data)
 
-    @action(detail=False, methods=['patch'], url_path='me/update')
+    @action(detail=False, methods=['patch'], url_path='update')
     def update_me(self, request):
         """
         Частично обновляет данные текущего пользователя.
@@ -167,6 +169,25 @@ class UserMeViewSet(viewsets.ViewSet):
             return Response(serializer.data)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['get'], url_path='referral-link')
+    def referral_link(self, request):
+        """
+        Возвращает персональную реферальную ссылку текущего пользователя.
+        """
+        user = request.user
+
+        # Пытаемся найти или создать referral
+        referral, _ = Referral.objects.get_or_create(
+            inviter=user,
+            invitee=None,
+            defaults={'referral_code': Referral.generate_unique_code()}
+        )
+
+        bot_username = settings.TELEGRAM_BOT_USERNAME
+        referral_link = f"https://t.me/{bot_username}?start={referral.referral_code}"
+
+        return Response({'referral_link': referral_link})
     
 
 class UserAvatarProgressViewSet(viewsets.ReadOnlyModelViewSet):

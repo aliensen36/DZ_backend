@@ -1,3 +1,6 @@
+import uuid
+import random
+import string
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.utils import timezone
 from django.db import models
@@ -63,7 +66,51 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return f'{self.first_name}'
+    
+    def get_or_create_referral_link(self):
+        referral, _ = Referral.objects.get_or_create(
+            inviter=self,
+            defaults={'referral_code': uuid.uuid4().hex[:8]}
+        )
+        return f"https://t.me/your_bot?start={referral.referral_code}"
 
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
+
+
+class Referral(models.Model):
+    inviter = models.ForeignKey(User, on_delete=models.CASCADE, related_name='referrals_sent', verbose_name='Приглашающий')
+    invitee = models.OneToOneField(User, on_delete=models.SET_NULL, related_name='referral_used', null=True, blank=True, verbose_name='Кого пригласили')
+    referral_code = models.CharField(max_length=20, unique=True, verbose_name='Реферальный код')
+    referral_code_used = models.CharField(max_length=20, blank=True, null=True, verbose_name='Использованный реферальный код')
+    is_rewarded = models.BooleanField(default=False, verbose_name='Награда начислена')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+
+    def __str__(self):
+        return f"{self.inviter} → {self.invitee or 'ожидается'}"
+    
+    class Meta:
+        unique_together = ('inviter', 'invitee')
+        verbose_name = 'Реферальная ссылка'
+        verbose_name_plural = 'Реферальные ссылки'
+
+    @classmethod
+    def generate_unique_code(cls, length=10):
+        """Генерирует уникальный реферальный код."""
+        while True:
+            code = ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+            if not cls.objects.filter(referral_code=code).exists():
+                return code
+
+
+class ReferralSettings(models.Model):
+    inviter_points = models.PositiveIntegerField(default=0, verbose_name='Баллы для приглашающего')
+    invitee_points = models.PositiveIntegerField(default=0, verbose_name='Баллы для приглашаемого')
+
+    def __str__(self):
+        return f"Баллы для рефералов: {self.inviter_points} для приглашающего, {self.invitee_points} для приглашаемого"
+    
+    class Meta:
+        verbose_name = 'Настройки реферальных баллов'
+        verbose_name_plural = 'Настройки реферальных баллов'
