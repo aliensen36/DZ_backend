@@ -8,12 +8,13 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from user_app.auth.permissions import IsBotAuthenticated, IsResident, IsAdmin
 from user_app.serializers import UserSerializer
 from .models import LoyaltyCard, PointsTransaction, Promotion
 from .serializers import PointsTransactionSerializer, PromotionSerializer
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse, OpenApiTypes, OpenApiExample
+from avatar_app.models import UserAvatarProgress
 
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -22,18 +23,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 class LoyaltyCardViewSet(viewsets.ViewSet):
-    permission_classes = [IsBotAuthenticated]
+    permission_classes = [AllowAny]  # Только в разработке
+    # permission_classes = [IsBotAuthenticated]
     lookup_field = "user__tg_id"
 
     def get_balance(self, user):
-        logger.debug(f"Calculating balance for user tg_id={user.tg_id}")
+        logger.debug(f"Get balance for user tg_id={user.tg_id}")
         card = LoyaltyCard.objects.filter(user=user).first()
         if not card:
             logger.warning(f"No loyalty card found for user tg_id={user.tg_id}")
             return 0
-        balance = PointsTransaction.objects.filter(card_id=card.id).aggregate(total=models.Sum('points'))['total'] or 0
-        logger.debug(f"Balance for user tg_id={user.tg_id}: {balance}")
-        return balance
+        return card.get_balance()
 
     def generate_card_image(self, user, card_number):
         cream_light = (255, 255, 230)
@@ -210,10 +210,11 @@ class LoyaltyCardViewSet(viewsets.ViewSet):
             return Response({"detail": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
 
 
-class PointsTransactionViewSet(viewsets.ModelViewSet):
+class PointsTransactionResidenrViewSet(viewsets.ModelViewSet):
     queryset = PointsTransaction.objects.all()
     serializer_class = PointsTransactionSerializer
-    permission_classes = [IsBotAuthenticated | IsResident]
+    permission_classes = [AllowAny]  # Только в разработке
+    # permission_classes = [IsBotAuthenticated | IsResident]
 
     def list(self, request):
         return Response({"detail": "Этот эндпоинт отключен."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -229,7 +230,6 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, pk=None):
         return Response({"detail": "Этот эндпоинт отключен."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
 
     @extend_schema(
         description="Метод для начисления баллов по сумме. 1 балл начисляется за каждые 100 рублей.",
@@ -273,10 +273,25 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
         if accrue_points <= 0:
             return Response({'error': 'Недостаточно суммы для начисления баллов'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # ⚠️ Получаем resident_id из заголовка, а не тела запроса
+        # Получаем resident_id из заголовка
         resident_id = request.headers.get('X-Resident-ID')
         if not resident_id:
             return Response({'error': 'Не передан X-Resident-ID в заголовке'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        card_id = request.data.get('card_id')
+        try:
+            card = LoyaltyCard.objects.select_related('user').get(id=card_id)
+        except LoyaltyCard.DoesNotExist:
+            return Response({'error': 'Карта лояльности не найдена'}, status=status.HTTP_404_NOT_FOUND)
+
+        user = card.user
+
+        # Обновляем прогресс аватара пользователя
+        user_avatar = UserAvatarProgress.objects.filter(user=user, is_active=True).first()
+        if user_avatar:
+            user_avatar.total_spending += price
+            user_avatar.save()
+            user_avatar.check_for_upgrade()
 
         transaction_data = {
             'price': price,
@@ -366,32 +381,135 @@ class PointsTransactionViewSet(viewsets.ModelViewSet):
         serializer.save()
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class PointsTransactionUserViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = PointsTransactionSerializer
+    permission_classes = [AllowAny] # Потом заменить на IsAuthenticated
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if not hasattr(user, 'loyalty_card'):
+            return PointsTransaction.objects.none()
+
+        return PointsTransaction.objects.filter(card_id=user.loyalty_card)
     
 
 class PromotionViewSet(viewsets.ModelViewSet):
     queryset = Promotion.objects.all()
     serializer_class = PromotionSerializer
-    permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsResident)]
+    permission_classes = [AllowAny]  # Только в разработке
+    # permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsResident)]
 
     def get_queryset(self):
-        return super().get_queryset().filter(is_approved=True)
+        queryset = super().get_queryset().filter(is_approved=True)
+        resident_id = self.request.query_params.get('resident')
+        if resident_id:
+            try:
+                queryset = queryset.filter(resident_id=int(resident_id))
+            except ValueError:
+                logger.error(f"Invalid resident_id in query parameter: {resident_id}")
+                queryset = queryset.none()
+        return queryset
+    
+    def get_object(self):
+        # Снимаем фильтр is_approved только для confirm/reject
+        if self.action in ["approve", "reject"]:
+            return Promotion.objects.get(pk=self.kwargs["pk"])
+        return super().get_object()
     
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        if 'photo' not in request.FILES:
+            return Response({"photo": ["Фото мероприятия обязательно."]}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+        instance = serializer.save()
+        instance.photo = request.FILES['photo']
+        instance.save()
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def partial_update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response(serializer.data)
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=request.data, partial=True, context={'request': request})
+            serializer.is_valid(raise_exception=True)
+
+            updated_fields = []
+            for field, value in serializer.validated_data.items():
+                if field != 'is_approved' and getattr(instance, field) != value:
+                    setattr(instance, field, value)
+                    updated_fields.append(field)
+
+            if 'photo' in request.FILES:
+                instance.photo = request.FILES['photo']
+                updated_fields.append('photo')
+
+            if updated_fields:
+                instance.is_approved = False
+                updated_fields.append('is_approved')
+
+            if updated_fields:
+                instance.save(update_fields=updated_fields)
+                logger.info(f"Promotion {instance.id} updated with fields: {updated_fields}, is_approved set to False")
+            else:
+                logger.debug(f"No fields changed for promotion {instance.id}")
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Promotion.DoesNotExist:
+            logger.error(f"Promotion {kwargs.get('pk')} not found")
+            return Response({'error': 'Акция не найдена'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error updating promotion {kwargs.get('pk')}: {str(e)}")
+            return Response({'error': f'Ошибка при обновлении акции: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    @action(detail=True, methods=['post'], permission_classes=[IsAdmin])
+    @action(detail=True, methods=['post'], permission_classes=[IsAdmin | IsBotAuthenticated])
     def approve(self, request, pk=None):
-        promotion = self.get_object()
-        promotion.is_approved = True
-        promotion.save()
-        return Response({'status': 'Акция подтверждена'})
+        """
+        Подтверждает акцию, устанавливая is_approved=True.
+        """
+        try:
+            promotion = self.get_object()
+            logger.debug(f"Approving promotion {promotion.id}, current is_approved={promotion.is_approved}")
+            promotion.is_approved = True
+            promotion.save(update_fields=['is_approved'])  # Указываем, что обновляется только is_approved
+            logger.info(f"Promotion {promotion.id} approved successfully, triggering post_save")
+            return Response({'status': 'Акция подтверждена'}, status=status.HTTP_200_OK)
+        except Promotion.DoesNotExist:
+            return Response(
+                {'error': 'Акция не найдена'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error approving promotion {pk}: {str(e)}")
+            return Response(
+                {'error': f'Ошибка при подтверждении акции: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAdmin | IsBotAuthenticated])
+    def reject(self, request, pk=None):
+        """
+        Отклоняет акцию, устанавливая is_approved=False и удаляет её из базы.
+        """
+        try:
+            promotion = self.get_object()
+            promotion.is_approved = False
+            promotion.save(update_fields=['is_approved'])  # Обновляем только статус
+
+            # Удаляем акцию из базы данных
+            promotion.delete()
+            
+            return Response({'status': 'Акция отклонена и удалена'}, status=status.HTTP_200_OK)
+        except Promotion.DoesNotExist:
+            return Response(
+                {'error': 'Акция не найдена'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Ошибка при отклонении акции: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

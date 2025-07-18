@@ -19,6 +19,9 @@ class LoyaltyCard(models.Model):
 
     def __str__(self):
         return f'Карта {self.card_number} ({self.user})'
+    
+    def get_balance(self):
+        return PointsTransaction.objects.filter(card_id=self.id).aggregate(total=models.Sum('points'))['total'] or 0
 
     def generate_card_number(self):
         while True:
@@ -31,6 +34,7 @@ class LoyaltyCard(models.Model):
         if not self.card_number:
             self.card_number = self.generate_card_number()
         super().save(*args, **kwargs)
+
 
 
 TRANSACTION_TYPE =[
@@ -60,13 +64,24 @@ class Promotion(models.Model):
     description = models.TextField(verbose_name='Описание акции')
     start_date = models.DateTimeField(verbose_name='Дата начала акции')
     end_date = models.DateTimeField(verbose_name='Дата окончания акции')
-    photo = models.CharField(max_length=255, verbose_name='Фото акции')
+    photo = models.ImageField(upload_to='promotions/photos/', verbose_name='Фото акции')
     is_approved = models.BooleanField(default=False, verbose_name='Одобрена ли акция')
     url = models.URLField(max_length=255, verbose_name='Ссылка на участие в акции')
     discount_or_bonus = models.CharField(max_length=10, choices=[('скидка', 'Скидка'), ('бонус', 'Бонус')], verbose_name='Тип скидки или бонуса')
     discount_or_bonus_value = models.FloatField(verbose_name='Значение скидки или бонуса', help_text='Введите значение скидки или бонуса, например 10% или 100 баллов')
 
     resident = models.ForeignKey(Resident, on_delete=models.CASCADE, related_name='promotions', verbose_name='Резидент')
+
+    def preview(self):
+        """Возвращает превью акции."""
+        if len(self.description) > 255:
+            return self.description[:255] + '...'
+        return self.description
+    
+    # Сохраняет оригинальное значение поля при инициализации
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._original_is_approved = self.is_approved
 
     class Meta:
         verbose_name = 'Акция'

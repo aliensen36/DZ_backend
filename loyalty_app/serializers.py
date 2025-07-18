@@ -2,6 +2,7 @@ import datetime
 
 from rest_framework import serializers
 from .models import LoyaltyCard, PointsTransaction, Promotion
+from django.conf import settings
 
 import logging
 logger = logging.getLogger(__name__)
@@ -54,4 +55,13 @@ class PromotionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Дата начала мероприятия не может быть в прошлом.")
 
         return data
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        request = self.context.get('request')
+        if instance.photo and request:
+            representation['photo'] = request.build_absolute_uri(instance.photo.url)
+        else:
+            representation['photo'] = None
+        return representation
     

@@ -56,6 +56,8 @@ CORS_ALLOW_HEADERS = ["authorization",
                       "x-api-key",
                       ]
 
+CORS_ALLOW_CREDENTIALS = True
+
 SITE_ID = 1
 
 # Application definition
@@ -66,6 +68,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
 
     'rest_framework',
     'drf_spectacular',
@@ -76,9 +79,13 @@ INSTALLED_APPS = [
     'loyalty_app.apps.LoyaltyAppConfig',
     'resident_app.apps.ResidentAppConfig',
     'event_app.apps.EventAppConfig',
+    'faq_app.apps.FaqAppConfig',
+    'avatar_app.apps.AvatarAppConfig',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

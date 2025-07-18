@@ -1,10 +1,10 @@
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
-
 from .models import Category, Resident
+from mailing_app.models import Subscription
 from .serializers import ResidentSerializer, CategorySerializer
 from user_app.auth.permissions import IsAdmin, IsBotAuthenticated
 
@@ -12,13 +12,29 @@ from user_app.auth.permissions import IsAdmin, IsBotAuthenticated
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
+    permission_classes = [AllowAny] # Только в разработке
+    # permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
+    # permission_classes = [IsBotAuthenticated | IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        category = serializer.save()
+
+        # Автоматическое создание подписки, при создании категории
+        Subscription.objects.create(
+            name=category.name,
+            description=category.description
+        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class ResidentViewSet(viewsets.ModelViewSet):
     queryset = Resident.objects.all()
     serializer_class = ResidentSerializer
-    permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
+    permission_classes = [AllowAny]  # Только в разработке
+    # permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
+    # permission_classes = [IsBotAuthenticated | IsAuthenticated]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -27,13 +43,11 @@ class ResidentViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(categories__id=category_id)
         return queryset
 
-
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -44,7 +58,9 @@ class ResidentViewSet(viewsets.ModelViewSet):
     
 
 class PinCodeVerifyView(APIView):
-    permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
+    permission_classes = [AllowAny]  # Только в разработке
+    # permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
+    # permission_classes = [IsBotAuthenticated | IsAuthenticated]
     def post(self, request):
         pin_code = request.data.get('pin_code')
         try:

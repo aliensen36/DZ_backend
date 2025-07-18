@@ -1,5 +1,8 @@
+from django.utils import timezone
+from django.db.models import Q
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -12,18 +15,41 @@ from user_app.auth.permissions import IsAdmin, IsBotAuthenticated
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
-    permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
+    permission_classes = [AllowAny]  # Только в разработке
+    # permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
     parser_classes = [MultiPartParser, FormParser]
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        today_only = self.request.query_params.get('today')
-        if today_only == 'true':
-            today = timezone.localdate()
-            queryset = queryset.filter(
-                Q(start_date__date=today) | Q(end_date__date=today)
-            )
-        return queryset
+    @action(detail=False, methods=['get'], url_path='today')
+    def today_events(self, request):
+        """
+        Возвращает мероприятия, которые проходят сегодня.
+        """
+        today = timezone.localdate()
+        events = self.queryset.filter(
+            Q(start_date__date=today) | Q(end_date__date=today)
+        ).order_by('-created_at')
+
+        if not events.exists():
+            return Response({'detail': 'На сегодня мероприятий нет.'}, status=status.HTTP_204_NO_CONTENT)
+        
+        serializer = self.get_serializer(events, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='exclude_today')
+    def exclude_today_events(self, request):
+        """
+        Возвращает мероприятия, которые НЕ проходят сегодня.
+        """
+        today = timezone.localdate()
+        events = self.queryset.exclude(
+            Q(start_date__date=today) | Q(end_date__date=today)
+        ).order_by('-created_at')
+
+        if not events.exists():
+            return Response({'detail': 'Все мероприятия проходят сегодня.'}, status=status.HTTP_204_NO_CONTENT)
+    
+        serializer = self.get_serializer(events, many=True)
+        return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
         if 'photo' not in request.FILES:

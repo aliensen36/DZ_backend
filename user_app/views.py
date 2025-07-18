@@ -1,12 +1,17 @@
 import logging
-from drf_spectacular.utils import extend_schema
+
 from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
+from drf_spectacular.utils import extend_schema
 from .auth.permissions import IsAdmin, IsBotAuthenticated
-from .serializers import UserSerializer
 from dotenv import load_dotenv
+
+from .serializers import UserSerializer
+from avatar_app.serializers import UserAvatarProgressSerializer, UserAvatarDetailSerializer
+from avatar_app.models import UserAvatarProgress
+
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -112,3 +117,66 @@ class UserViewSet(
             logger.error(f"Multiple users found for phone_number={phone_number}")
             return Response({"detail": "Найдено несколько пользователей с таким номером телефона"},
                             status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserMeViewSet(viewsets.ViewSet):
+    permission_classes = [AllowAny] # Потом поменять на IsAuthenticated
+
+    @action(detail=False, methods=['get'], url_path='me')
+    def me(self, request):
+        """
+        Возвращает текущего пользователя и его активный аватар (если выбран),
+        а также информацию о карте лояльности (если зарегистрирован).
+        """
+        user = request.user
+
+        data = {
+            "user": UserSerializer(user).data,
+            "is_registered_in_loyalty": hasattr(user, 'loyalty_card'),
+        }
+
+        if hasattr(user, 'loyalty_card'):
+            data["loyalty_card"] = {
+                "card_number": user.loyalty_card.card_number,
+                "created_at": user.loyalty_card.created_at,
+                "balance": user.loyalty_card.get_balance(),
+            }
+
+        user_avatar = (
+            UserAvatarProgress.objects
+            .filter(user=user, is_active=True)
+            .select_related('avatar', 'current_stage')
+            .prefetch_related('avatar__avatar_stages__stage')
+            .first()
+        )
+
+        data["avatar"] = UserAvatarDetailSerializer(user_avatar).data if user_avatar else None
+
+        return Response(data)
+
+    @action(detail=False, methods=['patch'], url_path='me/update')
+    def update_me(self, request):
+        """
+        Частично обновляет данные текущего пользователя.
+        """
+        user = request.user
+        serializer = UserSerializer(user, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class UserAvatarProgressViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [AllowAny]
+    serializer_class = UserAvatarProgressSerializer
+
+    def get_queryset(self):
+        """
+        Эндпоинт для просмотра всех аватаров, которых пользователь уже выбрал.
+        """
+        return UserAvatarProgress.objects.filter(user=self.request.user).select_related(
+            'avatar', 'current_stage'
+        ).prefetch_related('avatar__avatar_stages__stage')

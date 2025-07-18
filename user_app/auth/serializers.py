@@ -5,11 +5,18 @@ from urllib.parse import parse_qs
 from .telegram_utils import verify_telegram_init_data
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 User = get_user_model()
 
-class CustomTokenObtainPairSerializer(serializers.Serializer):
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     init_data = serializers.CharField()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields.pop('tg_id', None)
+        self.fields.pop('password', None)
+
 
     def validate(self, attrs):
         init_data = attrs.get('init_data')

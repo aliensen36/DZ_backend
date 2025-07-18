@@ -35,6 +35,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True, verbose_name='Активный')
     is_staff = models.BooleanField(default=False, verbose_name='Админ')
     is_superuser = models.BooleanField(default=False, verbose_name='Суперюзер')
+    enable_notifications = models.BooleanField(default=True, verbose_name='Уведомления')
 
     USERNAME_FIELD = 'tg_id'
     REQUIRED_FIELDS = []

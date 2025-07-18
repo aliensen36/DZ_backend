@@ -1,7 +1,7 @@
 from rest_framework import viewsets, permissions, serializers, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import NotFound
 from django.db import models
 from .models import Mailing, Subscription
@@ -45,7 +45,7 @@ class UserSubscriptionViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer
-    permission_classes = [IsAuthenticated | IsBotAuthenticated]
+    permission_classes = [AllowAny | IsBotAuthenticated]  #AllowAny заменить потом на IsAuthenticated
 
     @action(detail=True, methods=["post"], url_path="subscribe")
     def subscribe(self, request, pk=None):

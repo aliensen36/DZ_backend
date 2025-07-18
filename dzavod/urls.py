@@ -8,7 +8,9 @@ from user_app.urls import user_app_router
 from mailing_app.urls import mailing_app_router
 from loyalty_app.urls import loyalty_app_router
 from resident_app.urls import resident_app_router
-from event_app.urls import event_app_router 
+from event_app.urls import event_app_router
+from faq_app.urls import faq_app_router
+from avatar_app.urls import avatar_app_router
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 router = DefaultRouter()
@@ -17,6 +19,8 @@ router.registry.extend(mailing_app_router.registry)
 router.registry.extend(loyalty_app_router.registry)
 router.registry.extend(resident_app_router.registry)
 router.registry.extend(event_app_router.registry)
+router.registry.extend(faq_app_router.registry)
+router.registry.extend(avatar_app_router.registry)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
