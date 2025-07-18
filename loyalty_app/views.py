@@ -23,8 +23,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 class LoyaltyCardViewSet(viewsets.ViewSet):
-    permission_classes = [AllowAny]  # Только в разработке
-    # permission_classes = [IsBotAuthenticated]
+    # permission_classes = [AllowAny]  # Только в разработке
+    permission_classes = [IsBotAuthenticated | IsAuthenticated]
     lookup_field = "user__tg_id"
 
     def get_balance(self, user):
@@ -213,8 +213,9 @@ class LoyaltyCardViewSet(viewsets.ViewSet):
 class PointsTransactionResidenrViewSet(viewsets.ModelViewSet):
     queryset = PointsTransaction.objects.all()
     serializer_class = PointsTransactionSerializer
-    permission_classes = [AllowAny]  # Только в разработке
+    # permission_classes = [AllowAny]  # Только в разработке
     # permission_classes = [IsBotAuthenticated | IsResident]
+    permission_classes = [IsBotAuthenticated | IsAuthenticated]
 
     def list(self, request):
         return Response({"detail": "Этот эндпоинт отключен."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -385,7 +386,8 @@ class PointsTransactionResidenrViewSet(viewsets.ModelViewSet):
 
 class PointsTransactionUserViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = PointsTransactionSerializer
-    permission_classes = [AllowAny] # Потом заменить на IsAuthenticated
+    # permission_classes = [AllowAny] # Потом заменить на IsAuthenticated
+    permission_classes = [IsBotAuthenticated | IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
@@ -399,8 +401,9 @@ class PointsTransactionUserViewSet(viewsets.ReadOnlyModelViewSet):
 class PromotionViewSet(viewsets.ModelViewSet):
     queryset = Promotion.objects.all()
     serializer_class = PromotionSerializer
-    permission_classes = [AllowAny]  # Только в разработке
+    # permission_classes = [AllowAny]  # Только в разработке
     # permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsResident)]
+    permission_classes = [IsBotAuthenticated | IsAuthenticated]
 
     def get_queryset(self):
         queryset = super().get_queryset().filter(is_approved=True)

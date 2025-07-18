@@ -15,8 +15,8 @@ from user_app.auth.permissions import IsAdmin, IsBotAuthenticated
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
-    permission_classes = [AllowAny]  # Только в разработке
-    # permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
+    # permission_classes = [AllowAny]  # Только в разработке
+    permission_classes = [IsBotAuthenticated | IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
 
     @action(detail=False, methods=['get'], url_path='today')
