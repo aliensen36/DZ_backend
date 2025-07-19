@@ -43,13 +43,13 @@ TRANSACTION_TYPE =[
 ]
 
 class PointsTransaction(models.Model):
-    points = models.IntegerField(null=False, verbose_name='Баллы (-/+): списание или пополнение')
-    price = models.FloatField(null=False, verbose_name='Сумма с которой начислились баллы или списались')
+    points = models.IntegerField(null=False, verbose_name='Баллы')
+    price = models.FloatField(null=False, verbose_name='Сумма операции')
     transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPE, verbose_name='Тип транзакции')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата транзакции')
 
-    card_id = models.ForeignKey(LoyaltyCard, on_delete=models.CASCADE, related_name='transactions')
-    resident_id = models.ForeignKey(Resident, on_delete=models.CASCADE, related_name='transactions', null=True, blank=True)
+    card_id = models.ForeignKey(LoyaltyCard, on_delete=models.CASCADE, related_name='transactions', verbose_name='Карта лояльности')
+    resident_id = models.ForeignKey(Resident, on_delete=models.CASCADE, related_name='transactions', verbose_name='Резидент')
 
     class Meta:
         verbose_name = 'Транзакция баллов'

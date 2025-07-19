@@ -148,12 +148,12 @@ class PointsTransactionForm(forms.ModelForm):
         if price is not None and price <= 0:
             raise ValidationError({'price': 'Сумма должна быть положительной.'})
 
-        if transaction_type == 'начисление':
+        if transaction_type == 'Начисление':
             points = int(price) // 100
             if points <= 0:
                 raise ValidationError({'price': 'Недостаточно суммы для начисления баллов.'})
             cleaned_data['points'] = points
-        elif transaction_type == 'списание':
+        elif transaction_type == 'Списание':
             max_deductible_points = int(price * 0.10)
             if max_deductible_points <= 0:
                 raise ValidationError({'price': 'Недостаточная сумма для списания баллов.'})
@@ -174,7 +174,8 @@ class PointsTransactionForm(forms.ModelForm):
 class PointsTransactionAdmin(admin.ModelAdmin):
     form = PointsTransactionForm
 
-    list_display = ('transaction_type', 'points', 'price', 'created_at', 'card_number', 'resident_name')
+    list_display = ('resident_name', 'points', 'user_name')
+    list_display_links = ('resident_name', 'points', 'user_name')
     list_filter = ('transaction_type', 'created_at', 'card_id', 'resident_id')
     search_fields = ('card_id__card_number', 'resident_id__name', 'transaction_type')
     fields = ('price', 'transaction_type', 'card_id', 'resident_id', 'created_at')
@@ -192,6 +193,13 @@ class PointsTransactionAdmin(admin.ModelAdmin):
     def resident_name(self, obj):
         return obj.resident_id.name if obj.resident_id else '-'
     resident_name.short_description = 'Резидент'
+
+    def user_name(self, obj):
+        if obj.card_id and obj.card_id.user:
+            return f"{obj.card_id.user.first_name} {obj.card_id.user.last_name}".strip()
+        return "-"
+
+    user_name.short_description = "Пользователь"
 
     def save_model(self, request, obj, form, change):
         obj.points = form.cleaned_data['points']
