@@ -55,7 +55,7 @@ class PromotionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Дата начала мероприятия не может быть в прошлом.")
 
         return data
-
+    
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         request = self.context.get('request')
