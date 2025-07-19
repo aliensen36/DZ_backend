@@ -20,7 +20,10 @@ class UserSerializer(serializers.ModelSerializer):
                 except ValueError:
                     raise serializers.ValidationError("Дата рождения должна быть в формате ГГГГ-ММ-ДД")
             elif isinstance(value, datetime.date):
-                return value
+                value = value.date()
+            
+            if value > datetime.date.today():
+                raise serializers.ValidationError("Дата рождения не может быть в будущем")
         return value
 
     def validate_phone_number(self, value):
