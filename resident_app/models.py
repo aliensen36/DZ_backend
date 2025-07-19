@@ -16,8 +16,8 @@ class Category(models.Model):
 
 class Resident(models.Model):
     name = models.CharField(max_length=255, unique=True, verbose_name='Наименование')
-    description = models.TextField(max_length=255, verbose_name='Описание')
-    info = models.TextField(verbose_name='Дополнительная информация')
+    description = models.TextField(null=True, blank=True, max_length=255, verbose_name='Описание')
+    info = models.TextField(null=True, blank=True, verbose_name='Дополнительная информация')
     working_time = models.TextField(null=True, blank=True, verbose_name='График работы')
     email = models.EmailField(max_length=255, unique=True, blank=True, null=True, verbose_name='Email')
     phone_number = models.CharField(max_length=16, unique=True, blank=True, null=True, verbose_name='Номер телефона')
@@ -25,7 +25,7 @@ class Resident(models.Model):
     full_address = models.CharField(max_length=255, verbose_name='Полный адрес на территории завода')
     floor = models.IntegerField(verbose_name='Этаж')
     office = models.IntegerField(unique=True, verbose_name='Офис/Помещение')
-    photo = models.ImageField(upload_to='residents/photos/', verbose_name='Фото')
+    photo = models.ImageField(upload_to='residents/photos/', null=True, blank=True, verbose_name='Фото')
     pin_code = models.CharField(max_length=6, unique=True, verbose_name='Пин-код')
 
     categories = models.ManyToManyField(Category, related_name='residents', verbose_name='Категории')
