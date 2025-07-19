@@ -1,10 +1,12 @@
 import logging
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from dzavod.settings import FRONTEND_BASE_URL
+
 from .models import Event
 from mailing_app.models import Mailing, Subscription
 from mailing_app.utils import send_telegram_message
-from dzavod.settings import FRONTEND_BASE_URL
+from mailing_app.utils import send_telegram_message
 
 logger = logging.getLogger(__name__)
 

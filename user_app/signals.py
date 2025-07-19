@@ -1,7 +1,12 @@
+import logging
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+
 from .models import User, Referral, ReferralSettings
 from loyalty_app.models import  LoyaltyCard, PointsTransaction
+from mailing_app.utils import send_telegram_message  
+
+logger = logging.getLogger(__name__)
 
 @receiver(post_save, sender=User)
 def handle_referral_and_points(sender, instance, created, **kwargs):
@@ -36,6 +41,14 @@ def handle_referral_and_points(sender, instance, created, **kwargs):
                     resident_id=None
                 )
 
+                send_telegram_message(
+                    user_id=inviter.tg_id,
+                    text=(
+                        f"Ты получил(а) {referral_settings.inviter_points} баллов за то, "
+                        f"что привёл(а) к нам друга — {'@'+instance.username}!"
+                    )
+                )
+
             # Начисляем баллы приглашенному, если у него есть карта лояльности
             if loyalty_card:
                 PointsTransaction.objects.create(
@@ -45,7 +58,20 @@ def handle_referral_and_points(sender, instance, created, **kwargs):
                     card_id=loyalty_card,
                     resident_id=None
                 )
+
+                send_telegram_message(
+                    user_id=instance.tg_id,
+                    text=(
+                        f"Ты получил(а) {referral_settings.invitee_points} баллов "
+                        f"за регистрацию по ссылке друга!"
+                    )
+                )
             
             referral.invitee = instance
             referral.is_rewarded = True 
             referral.save() 
+
+            logger.info(
+                f"Реферальные баллы начислены: {inviter.tg_id} (+{referral_settings.inviter_points}), "
+                f"{instance.tg_id} (+{referral_settings.invitee_points})"
+            )
