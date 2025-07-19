@@ -39,6 +39,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False, verbose_name='Админ')
     is_superuser = models.BooleanField(default=False, verbose_name='Суперюзер')
     enable_notifications = models.BooleanField(default=True, verbose_name='Уведомления')
+    referral_code_used = models.CharField(max_length=20, null=True, blank=True, verbose_name='Использованный реферальный код')
 
     USERNAME_FIELD = 'tg_id'
     REQUIRED_FIELDS = []
