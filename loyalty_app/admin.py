@@ -174,7 +174,7 @@ class PointsTransactionForm(forms.ModelForm):
 class PointsTransactionAdmin(admin.ModelAdmin):
     form = PointsTransactionForm
 
-    list_display = ('transaction_type', 'points', 'price', 'created_at', 'card_number', 'resident_name')
+    list_display = ('resident_name', 'points', 'card_number')
     list_filter = ('transaction_type', 'created_at', 'card_id', 'resident_id')
     search_fields = ('card_id__card_number', 'resident_id__name', 'transaction_type')
     fields = ('price', 'transaction_type', 'card_id', 'resident_id', 'created_at')
