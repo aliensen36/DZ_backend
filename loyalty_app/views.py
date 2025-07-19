@@ -366,7 +366,9 @@ class PointsTransactionResidenrViewSet(viewsets.ModelViewSet):
 
         if current_balance < max_deductible_points:
             return Response({
-                'error': f'Недостаточно баллов. Баланс: {current_balance}, требуется: {max_deductible_points}'
+                'error': f'Недостаточно баллов.\n'
+                         f'Баланс: <b>{current_balance}</b>.\n'
+                         f'требуется: <b>{max_deductible_points}</b>'
             }, status=status.HTTP_400_BAD_REQUEST)
 
         transaction_data = {
