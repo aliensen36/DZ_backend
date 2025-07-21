@@ -58,7 +58,8 @@ class RouteAdmin(admin.ModelAdmin):
 
 @admin.register(Floor)
 class FloorAdmin(admin.ModelAdmin):
-    list_display = ('number', 'building')
+    list_display = ('building', 'number' )
+    list_display_links = ('building', 'number')
     list_filter = ('building',)
     ordering = ('building', 'number')
     search_fields = ('number', 'building__name')
