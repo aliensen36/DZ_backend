@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Building, Floor, Location, Connection, Route, LocationCorner
+from .models import Building, Floor, Location, Connection, Route, LocationCorner, LocationType
 from django.utils.safestring import mark_safe
 
 
@@ -23,6 +23,12 @@ class BuildingAdmin(admin.ModelAdmin):
     list_display = ('name',)
     search_fields = ('name',)
     inlines = [FloorInline]
+
+
+@admin.register(LocationType)
+class LocationTypeAdmin(admin.ModelAdmin):
+    list_display = ('name',)
+    search_fields = ('name',)
 
 
 @admin.register(Location)

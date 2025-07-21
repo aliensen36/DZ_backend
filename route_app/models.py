@@ -25,19 +25,24 @@ class Floor(models.Model):
     def __str__(self):
         return f'{self.building.name} - {self.number}'
 
-class LocationType(models.TextChoices):
-    OFFICE = 'office', 'Офис'
-    HALL = 'hall', 'Зал'
-    CORRIDOR = 'corridor', 'Коридор'
-    ELEVATOR = 'elevator', 'Лифт'
-    STAIRS = 'stairs', 'Лестница'
-    ENTRY = 'entry', 'Вход'
-    OTHER = 'other', 'Другое'
+
+class LocationType(models.Model):
+    name = models.CharField(max_length=100, verbose_name='Название')
+    code = models.CharField(max_length=50, unique=True, verbose_name='Код')
+
+    class Meta:
+        verbose_name = 'Тип локации'
+        verbose_name_plural = 'Типы локаций'
+
+    def __str__(self):
+        return self.name
+
 
 class Location(models.Model):
     name = models.CharField(max_length=100, verbose_name='Название')
     floor = models.ForeignKey(Floor, on_delete=models.CASCADE, related_name='locations', verbose_name='Этаж')
-    location_type = models.CharField(max_length=20, choices=LocationType.choices, verbose_name='Тип локации')
+    location_type = models.ForeignKey(LocationType, on_delete=models.SET_NULL, null=True, blank=True,
+                                      related_name='locations', verbose_name='Тип локации')
 
     def __str__(self):
         return self.name
