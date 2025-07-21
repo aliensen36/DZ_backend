@@ -75,51 +75,53 @@ class FloorAdmin(admin.ModelAdmin):
         min_x, max_x = min(all_x), max(all_x)
         min_y, max_y = min(all_y), max(all_y)
 
-        padding = 50  # Отступы вокруг плана внутри SVG
+        padding = 50
         width = max_x - min_x + padding * 2
         height = max_y - min_y + padding * 2
 
-        # Смещение для нормализации координат (чтобы все было в положительных координатах с отступом)
         offset_x = -min_x + padding
         offset_y = -min_y + padding
 
-        # Шаг сетки и диапазон для подписей (от мин до макс с шагом)
-        grid_step = 50
+        def invert_y(y_val):
+            return height - y_val
 
+        grid_step = 50
         svg_elements = []
 
-        # Рисуем сетку — вертикальные линии и подписи по X
+        # Вертикальные линии и подписи по X
         x_lines = range(int(min_x // grid_step * grid_step), int(max_x + grid_step), grid_step)
         for x in x_lines:
             x_pos = x + offset_x
             svg_elements.append(f'''
                 <line x1="{x_pos}" y1="0" x2="{x_pos}" y2="{height}" stroke="#ddd" stroke-width="1"/>
-                <text x="{x_pos + 2}" y="14" font-size="12" fill="#666">{x}</text>
+                <text x="{x_pos + 2}" y="{invert_y(0) - 4}" font-size="12" fill="#666">{x}</text>
             ''')
 
         # Горизонтальные линии и подписи по Y
         y_lines = range(int(min_y // grid_step * grid_step), int(max_y + grid_step), grid_step)
         for y in y_lines:
-            y_pos = y + offset_y
+            y_pos = invert_y(y + offset_y)
             svg_elements.append(f'''
                 <line x1="0" y1="{y_pos}" x2="{width}" y2="{y_pos}" stroke="#ddd" stroke-width="1"/>
                 <text x="2" y="{y_pos - 4}" font-size="12" fill="#666">{y}</text>
             ''')
 
-        # Рисуем локации (полигоны)
+        # Полигоны и подписи
         for loc in locations:
             corners = loc.corners.order_by('order')
             if corners.count() >= 3:
-                points_str = " ".join(f"{c.x + offset_x},{c.y + offset_y}" for c in corners)
+                points_str = " ".join(
+                    f"{c.x + offset_x},{invert_y(c.y + offset_y)}" for c in corners
+                )
+                first_corner_x = corners[0].x + offset_x
+                first_corner_y = invert_y(corners[0].y + offset_y)
                 svg_elements.append(f'''
                     <polygon points="{points_str}" fill="#a0d8ef" stroke="#333" stroke-width="1">
                         <title>{loc.name} ({loc.location_type})</title>
                     </polygon>
-                    <text x="{corners[0].x + offset_x + 5}" y="{corners[0].y + offset_y - 5}" font-size="12"
+                    <text x="{first_corner_x + 5}" y="{first_corner_y - 5}" font-size="12"
                           fill="#000" font-weight="bold" text-anchor="start">{loc.name}</text>
                 ''')
-
-        # Здесь можно добавить связи, если нужно, по аналогии с полигоном
 
         svg_id = f"map-svg-{obj.pk}"
 
