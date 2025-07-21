@@ -20,71 +20,9 @@ class LocationCornerInline(admin.TabularInline):
 
 @admin.register(Building)
 class BuildingAdmin(admin.ModelAdmin):
-    list_display = ('name')
+    list_display = ('name',)
     search_fields = ('name',)
     inlines = [FloorInline]
-
-
-@admin.register(Floor)
-class FloorAdmin(admin.ModelAdmin):
-    list_display = ('number', 'building')
-    list_filter = ('building',)
-    ordering = ('building', 'number')
-    search_fields = ('number', 'building__name')
-    inlines = [LocationInline]
-    readonly_fields = ['floor_map_preview']
-
-    def floor_map_preview(self, obj):
-        locations = obj.locations.prefetch_related('corners').all()
-        location_dict = {loc.id: loc for loc in locations}
-        svg_elements = []
-
-        # 🔹 Отрисовываем локации (многоугольники)
-        for loc in locations:
-            corners = loc.corners.order_by('order')
-            if corners.count() >= 3:
-                points_str = " ".join(f"{c.x},{c.y}" for c in corners)
-                svg_elements.append(f'''
-                    <polygon points="{points_str}" fill="#a0d8ef" stroke="#333" stroke-width="1">
-                        <title>{loc.name} ({loc.location_type})</title>
-                    </polygon>
-                    <text x="{corners[0].x + 5}" y="{corners[0].y - 5}" font-size="10">{loc.name}</text>
-                ''')
-
-        # 🔸 Отрисовываем связи (Connection)
-        connections = Connection.objects.filter(
-            from_location__floor=obj,
-            to_location__floor=obj
-        )
-
-        for conn in connections:
-            from_loc = location_dict.get(conn.from_location_id)
-            to_loc = location_dict.get(conn.to_location_id)
-
-            if from_loc and to_loc:
-                from_corners = from_loc.corners.order_by('order')
-                to_corners = to_loc.corners.order_by('order')
-
-                if from_corners and to_corners:
-                    fx = sum(c.x for c in from_corners) / len(from_corners)
-                    fy = sum(c.y for c in from_corners) / len(from_corners)
-                    tx = sum(c.x for c in to_corners) / len(to_corners)
-                    ty = sum(c.y for c in to_corners) / len(to_corners)
-
-                    svg_elements.append(f'''
-                        <line x1="{fx}" y1="{fy}" x2="{tx}" y2="{ty}"
-                              stroke="green" stroke-width="2">
-                            <title>Переход: {from_loc.name} → {to_loc.name}</title>
-                        </line>
-                    ''')
-
-        # ⬜ SVG с фиксированным размером
-        svg_code = f'''
-            <svg width="600" height="600" style="border:1px solid #ccc">
-                {"".join(svg_elements)}
-            </svg>
-        '''
-        return mark_safe(svg_code)
 
 
 @admin.register(Location)
@@ -110,3 +48,145 @@ class RouteAdmin(admin.ModelAdmin):
     list_filter = ('name',)
     search_fields = ('name',)
     autocomplete_fields = ('start_location', 'end_location')
+
+
+@admin.register(Floor)
+class FloorAdmin(admin.ModelAdmin):
+    list_display = ('number', 'building')
+    list_filter = ('building',)
+    ordering = ('building', 'number')
+    search_fields = ('number', 'building__name')
+    inlines = [LocationInline]
+    readonly_fields = ['floor_map_preview']
+
+    def floor_map_preview(self, obj):
+        locations = obj.locations.prefetch_related('corners').all()
+
+        all_x = []
+        all_y = []
+        for loc in locations:
+            for c in loc.corners.order_by('order'):
+                all_x.append(c.x)
+                all_y.append(c.y)
+
+        if not all_x or not all_y:
+            return "Нет данных для отображения плана."
+
+        min_x, max_x = min(all_x), max(all_x)
+        min_y, max_y = min(all_y), max(all_y)
+
+        padding = 50  # Отступы вокруг плана внутри SVG
+        width = max_x - min_x + padding * 2
+        height = max_y - min_y + padding * 2
+
+        # Смещение для нормализации координат (чтобы все было в положительных координатах с отступом)
+        offset_x = -min_x + padding
+        offset_y = -min_y + padding
+
+        # Шаг сетки и диапазон для подписей (от мин до макс с шагом)
+        grid_step = 50
+
+        svg_elements = []
+
+        # Рисуем сетку — вертикальные линии и подписи по X
+        x_lines = range(int(min_x // grid_step * grid_step), int(max_x + grid_step), grid_step)
+        for x in x_lines:
+            x_pos = x + offset_x
+            svg_elements.append(f'''
+                <line x1="{x_pos}" y1="0" x2="{x_pos}" y2="{height}" stroke="#ddd" stroke-width="1"/>
+                <text x="{x_pos + 2}" y="14" font-size="12" fill="#666">{x}</text>
+            ''')
+
+        # Горизонтальные линии и подписи по Y
+        y_lines = range(int(min_y // grid_step * grid_step), int(max_y + grid_step), grid_step)
+        for y in y_lines:
+            y_pos = y + offset_y
+            svg_elements.append(f'''
+                <line x1="0" y1="{y_pos}" x2="{width}" y2="{y_pos}" stroke="#ddd" stroke-width="1"/>
+                <text x="2" y="{y_pos - 4}" font-size="12" fill="#666">{y}</text>
+            ''')
+
+        # Рисуем локации (полигоны)
+        for loc in locations:
+            corners = loc.corners.order_by('order')
+            if corners.count() >= 3:
+                points_str = " ".join(f"{c.x + offset_x},{c.y + offset_y}" for c in corners)
+                svg_elements.append(f'''
+                    <polygon points="{points_str}" fill="#a0d8ef" stroke="#333" stroke-width="1">
+                        <title>{loc.name} ({loc.location_type})</title>
+                    </polygon>
+                    <text x="{corners[0].x + offset_x + 5}" y="{corners[0].y + offset_y - 5}" font-size="12"
+                          fill="#000" font-weight="bold" text-anchor="start">{loc.name}</text>
+                ''')
+
+        # Здесь можно добавить связи, если нужно, по аналогии с полигоном
+
+        svg_id = f"map-svg-{obj.pk}"
+
+        html_code = f'''
+        <div style="position: relative; max-width: 100%; overflow: auto; user-select:none;">
+            <svg id="{svg_id}" viewBox="0 0 {width} {height}" width="100%" height="600"
+                 style="border:1px solid #ccc; background:#f9f9f9; cursor: grab;"
+                 preserveAspectRatio="xMidYMid meet"
+                 onmousedown="startPan(evt)" onmouseup="endPan(evt)" onmousemove="pan(evt)">
+                {"".join(svg_elements)}
+            </svg>
+        </div>
+
+        <script>
+            let svg = document.getElementById("{svg_id}");
+            let isPanning = false;
+            let startPoint = {{ x: 0, y: 0 }};
+            let viewBox = {{ x: 0, y: 0, width: {width}, height: {height} }};
+
+            function startPan(evt) {{
+                isPanning = true;
+                startPoint = {{ x: evt.clientX, y: evt.clientY }};
+                svg.style.cursor = 'grabbing';
+            }}
+
+            function endPan(evt) {{
+                isPanning = false;
+                svg.style.cursor = 'grab';
+            }}
+
+            function pan(evt) {{
+                if (!isPanning) return;
+                evt.preventDefault();
+
+                let dx = (startPoint.x - evt.clientX) * (viewBox.width / svg.clientWidth);
+                let dy = (startPoint.y - evt.clientY) * (viewBox.height / svg.clientHeight);
+
+                viewBox.x += dx;
+                viewBox.y += dy;
+                svg.setAttribute('viewBox', `${{viewBox.x}} ${{viewBox.y}} ${{viewBox.width}} ${{viewBox.height}}`);
+
+                startPoint = {{ x: evt.clientX, y: evt.clientY }};
+            }}
+
+            svg.addEventListener('wheel', function(evt) {{
+                evt.preventDefault();
+                const scaleFactor = 1.1;
+                let direction = evt.deltaY > 0 ? 1 : -1;
+
+                let mx = evt.offsetX;
+                let my = evt.offsetY;
+
+                let svgRect = svg.getBoundingClientRect();
+
+                let svgX = viewBox.x + (mx / svg.clientWidth) * viewBox.width;
+                let svgY = viewBox.y + (my / svg.clientHeight) * viewBox.height;
+
+                let newWidth = direction > 0 ? viewBox.width * scaleFactor : viewBox.width / scaleFactor;
+                let newHeight = direction > 0 ? viewBox.height * scaleFactor : viewBox.height / scaleFactor;
+
+                let newX = svgX - (mx / svg.clientWidth) * newWidth;
+                let newY = svgY - (my / svg.clientHeight) * newHeight;
+
+                viewBox = {{ x: newX, y: newY, width: newWidth, height: newHeight }};
+                svg.setAttribute('viewBox', `${{viewBox.x}} ${{viewBox.y}} ${{viewBox.width}} ${{viewBox.height}}`);
+            }}, {{ passive: false }});
+        </script>
+        '''
+
+        return mark_safe(html_code)
