@@ -28,7 +28,13 @@ class Floor(models.Model):
 
 class LocationType(models.Model):
     name = models.CharField(max_length=100, verbose_name='Название')
-    code = models.CharField(max_length=50, unique=True, verbose_name='Код')
+    # code = models.CharField(max_length=50, unique=True, verbose_name='Код')
+    color = models.CharField(
+        max_length=7,
+        default='#dddddd',
+        verbose_name='Цвет (hex)',
+        help_text='Например, #ff0000 для красного'
+    )
 
     class Meta:
         verbose_name = 'Тип локации'

@@ -1,5 +1,11 @@
-from rest_framework import viewsets
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
+from drf_spectacular.utils import extend_schema
+from rest_framework.response import Response
+from rest_framework.decorators import action
+from .navigation import find_shortest_path
+from rest_framework import viewsets, status
+
+
+
 from .models import (
     Building, Floor, LocationType, Location,
     LocationCorner, Connection, Route
@@ -51,3 +57,23 @@ class ConnectionViewSet(viewsets.ModelViewSet):
 class RouteViewSet(viewsets.ModelViewSet):
     queryset = Route.objects.all()
     serializer_class = RouteSerializer
+
+    @extend_schema(
+        responses={200: LocationSerializer(many=True)},
+        description="Возвращает путь от начальной до конечной точки маршрута"
+    )
+
+    @action(detail=True, methods=['get'])
+    def navigate(self, request, pk=None):
+        route = self.get_object()
+        path_ids = find_shortest_path(route.start_location, route.end_location)
+
+        if path_ids is None:
+            return Response({"detail": "Путь не найден"}, status=status.HTTP_404_NOT_FOUND)
+
+        locations = Location.objects.filter(id__in=path_ids)
+        locations_by_id = {loc.id: loc for loc in locations}
+        ordered = [locations_by_id[loc_id] for loc_id in path_ids]
+        serializer = LocationSerializer(ordered, many=True)
+
+        return Response(serializer.data)
