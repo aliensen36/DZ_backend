@@ -20,14 +20,14 @@ class LocationCornerInline(admin.TabularInline):
 
 @admin.register(Building)
 class BuildingAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name')
+    list_display = ('name')
     search_fields = ('name',)
     inlines = [FloorInline]
 
 
 @admin.register(Floor)
 class FloorAdmin(admin.ModelAdmin):
-    list_display = ('id', 'number', 'building')
+    list_display = ('number', 'building')
     list_filter = ('building',)
     ordering = ('building', 'number')
     search_fields = ('number', 'building__name')
@@ -98,7 +98,7 @@ class LocationAdmin(admin.ModelAdmin):
 
 @admin.register(Connection)
 class ConnectionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'from_location', 'to_location', 'bidirectional', 'cost')
+    list_display = ('from_location', 'to_location', 'bidirectional', 'cost')
     list_filter = ('bidirectional',)
     raw_id_fields = ('from_location', 'to_location')
     autocomplete_fields = ('from_location', 'to_location')
