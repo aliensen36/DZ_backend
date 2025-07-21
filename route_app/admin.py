@@ -1,6 +1,9 @@
 from django.contrib import admin
+from django.utils.html import format_html
+
 from .models import Building, Floor, Location, Connection, Route, LocationCorner, LocationType
 from django.utils.safestring import mark_safe
+from django import forms
 
 
 class FloorInline(admin.TabularInline):
@@ -25,10 +28,31 @@ class BuildingAdmin(admin.ModelAdmin):
     inlines = [FloorInline]
 
 
+class LocationTypeForm(forms.ModelForm):
+    class Meta:
+        model = LocationType
+        fields = '__all__'
+        widgets = {
+            'color': forms.TextInput(attrs={'type': 'color'}),
+        }
+
+
 @admin.register(LocationType)
 class LocationTypeAdmin(admin.ModelAdmin):
     list_display = ('name',)
     search_fields = ('name',)
+    form = LocationTypeForm
+
+    def color_preview(self, obj):
+        if obj.color:
+            return format_html(
+                '<div style="width: 30px; height: 20px; background-color: {}; border: 1px solid #ccc;"></div>',
+                obj.color
+            )
+        return '-'
+
+    color_preview.short_description = 'Цвет'
+
 
 
 @admin.register(Location)
