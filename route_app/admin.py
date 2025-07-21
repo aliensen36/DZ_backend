@@ -88,6 +88,17 @@ class FloorAdmin(admin.ModelAdmin):
         grid_step = 50
         svg_elements = []
 
+        # Цвета по типу помещения
+        type_colors = {
+            'office': '#a0d8ef',  # голубой
+            'hall': '#c4f0c5',  # светло-зелёный
+            'corridor': '#fce38a',  # жёлтый
+            'elevator': '#f38181',  # красноватый
+            'stairs': '#95e1d3',  # бирюзовый
+            'entry': '#eaffd0',  # светло-салатовый
+            'other': '#dddddd',  # серый
+        }
+
         # Вертикальные линии и подписи по X
         x_lines = range(int(min_x // grid_step * grid_step), int(max_x + grid_step), grid_step)
         for x in x_lines:
@@ -115,9 +126,10 @@ class FloorAdmin(admin.ModelAdmin):
                 )
                 first_corner_x = corners[0].x + offset_x
                 first_corner_y = invert_y(corners[0].y + offset_y)
+                fill_color = type_colors.get(loc.location_type, '#cccccc')
                 svg_elements.append(f'''
-                    <polygon points="{points_str}" fill="#a0d8ef" stroke="#333" stroke-width="1">
-                        <title>{loc.name} ({loc.location_type})</title>
+                    <polygon points="{points_str}" fill="{fill_color}" stroke="#333" stroke-width="1">
+                        <title>{loc.name} ({loc.get_location_type_display()})</title>
                     </polygon>
                     <text x="{first_corner_x + 5}" y="{first_corner_y - 5}" font-size="12"
                           fill="#000" font-weight="bold" text-anchor="start">{loc.name}</text>
