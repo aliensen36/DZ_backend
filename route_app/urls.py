@@ -1,5 +1,7 @@
 from django.urls import path
 from rest_framework import routers
+
+from .floor_plan_preview import floor_plan_preview
 from .views import *
 
 route_app_router = routers.DefaultRouter()
@@ -12,4 +14,6 @@ route_app_router.register(r'connections', ConnectionViewSet, basename='connectio
 route_app_router.register(r'routes', RouteViewSet, basename='route')
 
 
-urlpatterns = []
+urlpatterns = [
+    path('floors/<int:pk>/plan/', floor_plan_preview, name='floor_plan_preview'),
+]
