@@ -56,6 +56,14 @@ class Location(models.Model):
         verbose_name = 'Локация'
         verbose_name_plural = 'Локации'
 
+    def get_center(self):
+        corners = list(self.corners.all())
+        if not corners:
+            return None
+        avg_x = sum(c.x for c in corners) / len(corners)
+        avg_y = sum(c.y for c in corners) / len(corners)
+        return avg_x, avg_y
+
 
 class LocationCorner(models.Model):
     location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='corners', verbose_name='Локация')

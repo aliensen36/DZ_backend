@@ -27,7 +27,6 @@ class Resident(models.Model):
     office = models.IntegerField(unique=True, verbose_name='Офис/Помещение')
     photo = models.ImageField(upload_to='residents/photos/', null=True, blank=True, verbose_name='Фото')
     pin_code = models.CharField(max_length=6, unique=True, verbose_name='Пин-код')
-
     categories = models.ManyToManyField(Category, related_name='residents', verbose_name='Категории')
 
     def __str__(self):
@@ -49,3 +48,16 @@ class Resident(models.Model):
             pin = ''.join(random.choices(string.digits, k=6))
             if not Resident.objects.filter(pin_code=pin).exists():
                 return pin
+
+
+class MapMarker(models.Model):
+    resident = models.OneToOneField('Resident', on_delete=models.CASCADE, related_name='map_marker', verbose_name='Резидент')
+    x = models.FloatField(verbose_name='Координата X')
+    y = models.FloatField(verbose_name='Координата Y')
+
+    def __str__(self):
+        return f"Метка {self.resident.name} ({self.x}, {self.y})"
+
+    class Meta:
+        verbose_name = 'Метка на карте'
+        verbose_name_plural = 'Метки на карте'
