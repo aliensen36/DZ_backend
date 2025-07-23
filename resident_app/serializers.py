@@ -1,7 +1,8 @@
 import re
 from rest_framework import serializers
 
-from .models import Category, Resident
+from .models import Category, Resident, MapMarker
+
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -56,3 +57,18 @@ class ResidentSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(errors)
 
         return data
+
+
+class MapMarkerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MapMarker
+        fields = ['x', 'y']
+
+
+class ResidentMapSerializer(serializers.ModelSerializer):
+    map_marker = MapMarkerSerializer()
+    categories = CategorySerializer(many=True)
+
+    class Meta:
+        model = Resident
+        fields = ['id', 'name', 'map_marker', 'categories']

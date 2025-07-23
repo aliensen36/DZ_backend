@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from .models import Category, Resident
 from mailing_app.models import Subscription
-from .serializers import ResidentSerializer, CategorySerializer
+from .serializers import ResidentSerializer, CategorySerializer, ResidentMapSerializer
 from user_app.auth.permissions import IsAdmin, IsBotAuthenticated
 
 
@@ -75,3 +75,17 @@ class PinCodeVerifyView(APIView):
                 'status': 'error',
                 'message': 'Неверный пин-код или пользователь не является администратором'
             }, status=status.HTTP_401_UNAUTHORIZED)
+
+
+class MapResidentListView(APIView):
+    def get(self, request):
+        category_ids = request.query_params.get('category_id')
+
+        queryset = Resident.objects.prefetch_related('categories', 'map_marker')
+
+        if category_ids:
+            ids = [int(i) for i in category_ids.split(',') if i.isdigit()]
+            queryset = queryset.filter(categories__in=ids).distinct()
+
+        serializer = ResidentMapSerializer(queryset, many=True)
+        return Response(serializer.data)

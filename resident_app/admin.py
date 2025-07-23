@@ -3,6 +3,15 @@ from django.utils.html import format_html
 from .models import *
 from mailing_app.models import Subscription
 
+class MapMarkerInline(admin.StackedInline):
+    model = MapMarker
+    extra = 0
+    can_delete = False
+    verbose_name = 'Координаты на карте'
+    verbose_name_plural = 'Координаты на карте'
+    fields = ('x', 'y')
+
+
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('name',)
@@ -21,6 +30,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Resident)
 class ResidentAdmin(admin.ModelAdmin):
+    inlines = [MapMarkerInline]
     list_display = ('name',)
     list_display_links = ('name',)
     list_filter = ('floor', 'office')
