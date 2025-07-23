@@ -27,7 +27,7 @@ class FloorSerializer(serializers.ModelSerializer):
 class LocationTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = LocationType
-        fields = ['id', 'name', 'code']
+        fields = ['id', 'name']
 
 
 class LocationCornerSerializer(serializers.ModelSerializer):
