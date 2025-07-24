@@ -23,6 +23,7 @@ class Resident(models.Model):
     phone_number = models.CharField(max_length=16, unique=True, blank=True, null=True, verbose_name='Номер телефона')
     official_website = models.URLField(max_length=255, unique=True, blank=True, null=True, verbose_name='Официальный сайт')
     full_address = models.CharField(max_length=255, verbose_name='Полный адрес на территории завода')
+    address = models.CharField(max_length=255, verbose_name='Адрес', default='ул. Большая Новодмитровская, д. 36')
     floor = models.IntegerField(verbose_name='Этаж')
     office = models.IntegerField(unique=True, verbose_name='Офис/Помещение')
     photo = models.ImageField(upload_to='residents/photos/', null=True, blank=True, verbose_name='Фото')

@@ -31,10 +31,10 @@ class CategoryAdmin(admin.ModelAdmin):
 @admin.register(Resident)
 class ResidentAdmin(admin.ModelAdmin):
     inlines = [MapMarkerInline]
-    list_display = ('name',)
-    list_display_links = ('name',)
+    list_display = ('name', 'floor', 'office')
+    list_display_links = ('name', 'floor', 'office')
     list_filter = ('floor', 'office')
-    search_fields = ('name', 'description', 'full_address', 'email', 'phone_number', 'pin_code')
+    search_fields = ('name', 'email', 'phone_number', 'pin_code')
     list_per_page = 20
     ordering = ('name',)
     filter_horizontal = ('categories',)
@@ -49,8 +49,7 @@ class ResidentAdmin(admin.ModelAdmin):
                 'fields': ('email', 'phone_number', 'official_website')
             }),
             ('Расположение', {
-                'fields': ('full_address', 'floor', 'office'),
-                'description': 'Укажите точное расположение на территории завода'
+                'fields': ('address', 'floor', 'office'),
             }),
             ('График работы', {
                 'fields': ('working_time',),
