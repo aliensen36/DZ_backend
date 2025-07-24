@@ -31,9 +31,9 @@ class CategoryAdmin(admin.ModelAdmin):
 @admin.register(Resident)
 class ResidentAdmin(admin.ModelAdmin):
     inlines = [MapMarkerInline]
-    list_display = ('name', 'floor', 'office')
-    list_display_links = ('name', 'floor', 'office')
-    list_filter = ('floor', 'office')
+    list_display = ('name', 'building', 'entrance', 'floor', 'office')
+    list_display_links = ('name', 'building', 'entrance', 'floor', 'office')
+    list_filter = ('building', 'entrance', 'floor', 'office')
     search_fields = ('name', 'email', 'phone_number', 'pin_code')
     list_per_page = 20
     ordering = ('name',)
@@ -48,8 +48,8 @@ class ResidentAdmin(admin.ModelAdmin):
             ('Контактные данные', {
                 'fields': ('email', 'phone_number', 'official_website')
             }),
-            ('Расположение', {
-                'fields': ('address', 'floor', 'office'),
+            ('Адрес', {
+                'fields': ('address', 'building', 'entrance', 'floor', 'office'),
             }),
             ('График работы', {
                 'fields': ('working_time',),
@@ -73,7 +73,7 @@ class ResidentAdmin(admin.ModelAdmin):
         """email, phone_number и pin_code нельзя менять при редактировании"""
         ro = ['pin_code']
         if obj:
-            ro += ['email', 'phone_number', 'photo_preview']
+            ro += ['photo_preview']
         return ro
 
     def floor_office(self, obj):
