@@ -24,7 +24,7 @@ class Resident(models.Model):
     official_website = models.URLField(max_length=255, unique=True, blank=True, null=True, verbose_name='Официальный сайт')
     address = models.CharField(max_length=255, verbose_name='Адрес', default='ул. Большая Новодмитровская, д. 36')
     building = models.CharField(max_length=20, verbose_name='Строение')
-    entrance = models.CharField(max_length=50, verbose_name='Вход')
+    entrance = models.CharField(max_length=50, verbose_name='Вход', null=True, blank=True)
     floor = models.IntegerField(verbose_name='Этаж')
     office = models.IntegerField(unique=True, verbose_name='Офис/Помещение')
     photo = models.ImageField(upload_to='residents/photos/', null=True, blank=True, verbose_name='Фото')
