@@ -5,14 +5,18 @@ from .models import Event
 from django.conf import settings
 
 
+
 class EventSerializer(serializers.ModelSerializer):
+    has_registration = serializers.SerializerMethodField()
+    has_ticket = serializers.SerializerMethodField()
+
     class Meta:
         model = Event
-        fields = ['id', 'title', 'description', 'info', 'start_date', 'end_date', 'location', 'photo', 'url', 'created_at']
+        fields = ['id', 'title', 'description', 'info', 'start_date', 'end_date', 'location', 'photo', 'ticket_url', 'registration_url', 'created_at']
         extra_kwargs = {
             'photo': {'required': True}
         }
-        
+
     def validate(self, data):
         start = data.get('start_date')
         end = data.get('end_date')
@@ -33,3 +37,11 @@ class EventSerializer(serializers.ModelSerializer):
         else:
             representation['photo'] = None
         return representation
+
+    def get_has_registration(self, obj):
+        # Возвращает True, если есть ссылка на регистрацию
+        return bool(obj.registration_url)
+
+    def get_has_ticket(self, obj):
+        # Возвращает True, если есть ссылка на покупку билета
+        return bool(obj.ticket_url)
