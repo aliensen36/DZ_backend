@@ -29,6 +29,9 @@ class Resident(models.Model):
     office = models.IntegerField(unique=True, verbose_name='Офис/Помещение')
     photo = models.ImageField(upload_to='residents/photos/', null=True, blank=True, verbose_name='Фото')
     pin_code = models.CharField(max_length=6, unique=True, verbose_name='Пин-код')
+    points_per_100_rubles = models.PositiveIntegerField(null=False, blank=False, verbose_name='Кол-во баллов за 100 р.')
+    max_deduct_percent = models.DecimalField(max_digits=5, decimal_places=2, null=False, blank=False, verbose_name='Максимальный процент от суммы покупки, который можно списать')
+
     categories = models.ManyToManyField(Category, related_name='residents', verbose_name='Категории')
 
     def __str__(self):
@@ -50,7 +53,6 @@ class Resident(models.Model):
             pin = ''.join(random.choices(string.digits, k=6))
             if not Resident.objects.filter(pin_code=pin).exists():
                 return pin
-
 
 class MapMarker(models.Model):
     resident = models.OneToOneField('Resident', on_delete=models.CASCADE, related_name='map_marker', verbose_name='Резидент')

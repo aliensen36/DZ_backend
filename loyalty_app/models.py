@@ -67,9 +67,8 @@ class Promotion(models.Model):
     photo = models.ImageField(upload_to='promotions/photos/', verbose_name='Фото акции')
     is_approved = models.BooleanField(default=False, verbose_name='Одобрена ли акция')
     url = models.URLField(max_length=255, verbose_name='Ссылка на участие в акции')
-    discount_or_bonus = models.CharField(max_length=10, choices=[('скидка', 'Скидка'), ('бонус', 'Бонус')], verbose_name='Тип скидки или бонуса')
-    discount_or_bonus_value = models.FloatField(verbose_name='Значение скидки или бонуса', help_text='Введите значение скидки или бонуса, например 10% или 100 баллов')
-
+    discount_percent = models.DecimalField(max_digits=5, decimal_places=2, null=False, blank=False, verbose_name='Процент скидки')
+    promotional_code = models.CharField(max_length=20, unique=True, verbose_name='Промокод')
     resident = models.ForeignKey(Resident, on_delete=models.CASCADE, related_name='promotions', verbose_name='Резидент')
 
     def preview(self):

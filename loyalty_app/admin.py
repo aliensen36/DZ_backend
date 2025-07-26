@@ -1,3 +1,5 @@
+import re
+
 from django import forms
 from django.db import models
 from django.contrib import admin
@@ -143,31 +145,42 @@ class PointsTransactionForm(forms.ModelForm):
         cleaned_data = super().clean()
         price = cleaned_data.get('price')
         transaction_type = cleaned_data.get('transaction_type')
-        card_id = cleaned_data.get('card_id')
+        card = cleaned_data.get('card_id')
+        resident = cleaned_data.get('resident_id')
 
         if price is not None and price <= 0:
             raise ValidationError({'price': 'Сумма должна быть положительной.'})
 
-        if transaction_type == 'Начисление':
-            points = int(price) // 100
+        if transaction_type == 'начисление':
+            if not resident:
+                raise ValidationError({'resident_id': 'Нужно выбрать резидента для расчета баллов.'})
+            points = int((price / 100) * resident.points_per_100_rubles)
             if points <= 0:
                 raise ValidationError({'price': 'Недостаточно суммы для начисления баллов.'})
             cleaned_data['points'] = points
-        elif transaction_type == 'Списание':
-            max_deductible_points = int(price * 0.10)
+
+        elif transaction_type == 'списание':
+            if not resident:
+                raise ValidationError({'resident_id': 'Нужно выбрать резидента для расчета лимита списания.'})
+            if not card:
+                raise ValidationError({'card_id': 'Нужно выбрать карту.'})
+
+            max_percent = resident.max_deduct_percent / 100
+            max_deductible_points = int(price * max_percent)
+            current_balance = card.get_balance()
+
             if max_deductible_points <= 0:
                 raise ValidationError({'price': 'Недостаточная сумма для списания баллов.'})
-            if card_id:
-                current_balance = card_id.get_balance()
-                if current_balance < max_deductible_points:
-                    raise ValidationError({
-                        'card_id': f'Недостаточно баллов. Баланс: {current_balance}, требуется: {max_deductible_points}'
-                    })
-                cleaned_data['points'] = -max_deductible_points
+            if current_balance < max_deductible_points:
+                raise ValidationError({
+                    'card_id': f'Недостаточно баллов. Баланс: {current_balance}, требуется: {max_deductible_points}'
+                })
+            cleaned_data['points'] = -max_deductible_points
         else:
             raise ValidationError({'transaction_type': 'Недопустимый тип транзакции.'})
 
         return cleaned_data
+
 
 
 @admin.register(PointsTransaction)
@@ -218,20 +231,44 @@ class PointsTransactionAdmin(admin.ModelAdmin):
             progress.check_for_upgrade()
 
 
+class PromotionAdminForm(forms.ModelForm):
+    class Meta:
+        model = Promotion
+        fields = '__all__'
+
+    def clean_promotional_code(self):
+        code = self.cleaned_data.get('promotional_code')
+
+        if not re.match(r'^[A-Z0-9]+$', code) or not re.search(r'\d', code):
+            raise ValidationError(
+                "Промокод должен содержать только заглавные латинские буквы и хотя бы одну цифру."
+            )
+
+        # Проверка уникальности
+        qs = Promotion.objects.filter(promotional_code=code)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise ValidationError("Такой промокод уже существует.")
+
+        return code
+
+
 @admin.register(Promotion)
 class PromotionAdmin(admin.ModelAdmin):
+    form = PromotionAdminForm
+    
     list_display = (
         'title',
         'resident',
         'start_date',
         'end_date',
-        'discount_or_bonus_display',
+        'discount_percent',
         'is_approved',
     )
-    list_filter = ('is_approved', 'discount_or_bonus', 'start_date', 'end_date')
+    list_filter = ('is_approved', 'discount_percent', 'start_date', 'end_date')
     search_fields = ('title', 'description', 'resident__name')
     list_editable = ('is_approved',)
-
     readonly_fields = ('photo_preview',)
 
     fieldsets = (
@@ -242,7 +279,7 @@ class PromotionAdmin(admin.ModelAdmin):
             'fields': ('start_date', 'end_date')
         }),
         ('Условия участия', {
-            'fields': ('discount_or_bonus', 'discount_or_bonus_value', 'url')
+            'fields': ('discount_percent', 'url', 'promotional_code')
         }),
         ('Привязка и статус', {
             'fields': ('resident', 'is_approved')
@@ -252,19 +289,11 @@ class PromotionAdmin(admin.ModelAdmin):
         }),
     )
 
-    formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows': 6, 'cols': 80})},
-    }
-
     def discount_or_bonus_display(self, obj):
-        if obj.discount_or_bonus == 'скидка':
-            return f'{obj.discount_or_bonus_value}%'
-        else:
-            return f'{int(obj.discount_or_bonus_value)} бонусов'
-    discount_or_bonus_display.short_description = 'Скидка / Бонус'
+        return f'{obj.discount_percent}%'
+    discount_or_bonus_display.short_description = 'Скидка'
 
     def photo_preview(self, obj):
         if obj and obj.photo:
             return format_html('<img src="{}" style="max-height: 200px;"/>', obj.photo.url)
         return "Нет фото"
-    photo_preview.short_description = "Превью фото"

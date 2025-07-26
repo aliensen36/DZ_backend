@@ -1,4 +1,5 @@
 import datetime
+import re
 
 from rest_framework import serializers
 from .models import LoyaltyCard, PointsTransaction, Promotion
@@ -47,12 +48,16 @@ class PromotionSerializer(serializers.ModelSerializer):
     def validate(self, data):
         start = data.get('start_date')
         end = data.get('end_date')
+        promotional_code = data.get('promotional_code')
 
         if start and end and end < start:
             raise serializers.ValidationError("Дата окончания мероприятия не может быть раньше даты начала.")
 
         if start and start < datetime.datetime.now(datetime.timezone.utc):
             raise serializers.ValidationError("Дата начала мероприятия не может быть в прошлом.")
+        
+        if not re.match(r'^[A-Z0-9]+$', promotional_code) and not re.search(r'\d', promotional_code):
+            raise serializers.ValidationError("Промокод должен содержать только заглавные буквы, а также обязательно включать хотя бы одну цифру.")
 
         return data
     

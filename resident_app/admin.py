@@ -31,7 +31,7 @@ class CategoryAdmin(admin.ModelAdmin):
 @admin.register(Resident)
 class ResidentAdmin(admin.ModelAdmin):
     inlines = [MapMarkerInline]
-    list_display = ('name', 'building', 'entrance', 'floor', 'office')
+    list_display = ('name', 'building', 'entrance', 'floor', 'office', 'points_per_100_rubles', 'max_deduct_percent')
     list_display_links = ('name', 'building', 'entrance', 'floor', 'office')
     list_filter = ('building', 'entrance', 'floor', 'office')
     search_fields = ('name', 'email', 'phone_number', 'pin_code')
@@ -43,7 +43,14 @@ class ResidentAdmin(admin.ModelAdmin):
         """Динамически добавляет photo_preview только при редактировании"""
         fieldsets = [
             ('Основная информация', {
-                'fields': ('name', 'categories', 'description', 'info')
+                'fields': (
+                    'name',
+                    'categories',
+                    'description',
+                    'info',
+                    'points_per_100_rubles',
+                    'max_deduct_percent'
+                )
             }),
             ('Контактные данные', {
                 'fields': ('email', 'phone_number', 'official_website')
@@ -57,9 +64,8 @@ class ResidentAdmin(admin.ModelAdmin):
             }),
         ]
 
-        # Добавляем фото и пин-код
         photo_fields = ['photo', 'pin_code']
-        if obj:  # только если объект уже существует
+        if obj:
             photo_fields.insert(1, 'photo_preview')
 
         fieldsets.append((
@@ -70,7 +76,6 @@ class ResidentAdmin(admin.ModelAdmin):
         return fieldsets
 
     def get_readonly_fields(self, request, obj=None):
-        """email, phone_number и pin_code нельзя менять при редактировании"""
         ro = ['pin_code']
         if obj:
             ro += ['photo_preview']
