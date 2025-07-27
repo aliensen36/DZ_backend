@@ -31,7 +31,7 @@ class CategoryAdmin(admin.ModelAdmin):
 @admin.register(Resident)
 class ResidentAdmin(admin.ModelAdmin):
     inlines = [MapMarkerInline]
-    list_display = ('name', 'building', 'entrance', 'floor', 'office', 'points_per_100_rubles', 'max_deduct_percent')
+    list_display = ('name', 'building', 'entrance', 'floor', 'office')
     list_display_links = ('name', 'building', 'entrance', 'floor', 'office')
     list_filter = ('building', 'entrance', 'floor', 'office')
     search_fields = ('name', 'email', 'phone_number', 'pin_code')
