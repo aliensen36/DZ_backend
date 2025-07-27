@@ -40,8 +40,8 @@ class EventSerializer(serializers.ModelSerializer):
 
     def get_has_registration(self, obj):
         # Возвращает True, если есть ссылка на регистрацию
-        return bool(obj.registration_url)
+        return bool(obj.enable_registration)
 
     def get_has_ticket(self, obj):
         # Возвращает True, если есть ссылка на покупку билета
-        return bool(obj.ticket_url)
+        return bool(obj.enable_tickets)

@@ -11,8 +11,13 @@ class Event(models.Model):
     end_date = models.DateTimeField(verbose_name='Окончание мероприятия')
     location = models.CharField(max_length=255, verbose_name='Место проведения')
     photo = models.ImageField(upload_to='events/photos/', verbose_name='Фото мероприятия')
+    # Флажки
+    enable_registration = models.BooleanField("Доступна регистрация", default=False)
+    enable_tickets = models.BooleanField("Доступна покупка билетов", default=False)
+    # Ссылки (необязательные, если флажки выключены)
     registration_url = models.URLField(null=True, blank=True, verbose_name='Ссылка на регистрацию')
     ticket_url = models.URLField(null=True, blank=True, verbose_name='Ссылку на покупку билета')
+
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
 
 
