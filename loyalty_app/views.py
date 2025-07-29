@@ -2,7 +2,7 @@ from django.conf import settings
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 import os
-from django.db import models
+from decimal import Decimal, InvalidOperation
 from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.response import Response
@@ -288,7 +288,7 @@ class PointsTransactionResidenrViewSet(viewsets.ModelViewSet):
         except LoyaltyCard.DoesNotExist:
             return Response({'error': 'Карта лояльности не найдена'}, status=status.HTTP_404_NOT_FOUND)
         
-        points_per_100_rub = resident.points_per_100_rub
+        points_per_100_rub = resident.points_per_100_rubles
 
         accrue_points = int(price) * points_per_100_rub // 100
         if accrue_points <= 0:
@@ -349,8 +349,10 @@ class PointsTransactionResidenrViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], url_path='deduct')
     def deduct_points(self, request):
         try:
-            price = float(request.data.get('price'))
-        except (TypeError, ValueError):
+            # Конвертируем price в Decimal для согласованности типов
+            from decimal import Decimal
+            price = Decimal(str(request.data.get('price')))
+        except (TypeError, ValueError, InvalidOperation):
             return Response({'error': 'Сумма должна быть числом.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if price <= 0:
@@ -360,13 +362,14 @@ class PointsTransactionResidenrViewSet(viewsets.ModelViewSet):
         resident_id = request.headers.get('X-Resident-ID')
 
         if not card_id or not resident_id:
-            return Response({'error': 'Необходимо указать ID карты и ID резидента.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Необходимо указать ID карты и ID резидента.'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         try:
             card = LoyaltyCard.objects.get(id=card_id)
         except LoyaltyCard.DoesNotExist:
             return Response({'error': 'Карта не найдена.'}, status=status.HTTP_404_NOT_FOUND)
-        
+
         try:
             resident = Resident.objects.get(id=resident_id)
         except Resident.DoesNotExist:
@@ -374,7 +377,12 @@ class PointsTransactionResidenrViewSet(viewsets.ModelViewSet):
 
         current_balance = card.get_balance()
         max_deduct_percent = resident.max_deduct_percent
-        max_deductible_points = int(price * (max_deduct_percent / 100))
+
+        # Убедимся, что max_deduct_percent обрабатывается как Decimal
+        max_deduct_percent = Decimal(str(max_deduct_percent))
+
+        # Расчет с использованием Decimal
+        max_deductible_points = int((price * max_deduct_percent) / Decimal('100'))
 
         if max_deductible_points <= 0:
             return Response({'error': 'Недостаточная сумма для списания баллов.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -388,7 +396,7 @@ class PointsTransactionResidenrViewSet(viewsets.ModelViewSet):
 
         transaction_data = {
             'points': -max_deductible_points,
-            'price': price,
+            'price': float(price),  # Сохраняем как float, если модель ожидает float
             'transaction_type': 'списание',
             'card_id': card_id,
             'resident_id': resident_id
