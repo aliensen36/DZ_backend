@@ -12,7 +12,8 @@ class EventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Event
-        fields = ['id', 'title', 'description', 'info', 'start_date', 'end_date', 'location', 'photo', 'ticket_url', 'registration_url', 'created_at']
+        fields = ['id', 'title', 'description', 'info', 'start_date', 'end_date', 'location',
+                  'photo', 'ticket_url', 'registration_url', 'created_at', 'has_registration', 'has_ticket' ]
         extra_kwargs = {
             'photo': {'required': True}
         }
@@ -26,6 +27,16 @@ class EventSerializer(serializers.ModelSerializer):
 
         if start and start < datetime.datetime.now(datetime.timezone.utc):
             raise serializers.ValidationError("Дата начала мероприятия не может быть в прошлом.")
+
+        if data.get('enable_registration') and not data.get('registration_url'):
+            raise serializers.ValidationError(
+                {"registration_url": "Укажите ссылку на регистрацию, если она включена."}
+            )
+
+        if data.get('enable_tickets') and not data.get('ticket_url'):
+            raise serializers.ValidationError(
+                {"ticket_url": "Укажите ссылку на покупку билетов, если она включена."}
+            )
 
         return data
 

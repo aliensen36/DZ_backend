@@ -1,6 +1,8 @@
 from tabnanny import verbose
 
 from django.db import models
+from rest_framework.exceptions import ValidationError
+
 
 class Event(models.Model):
     """Модель для представления мероприятий."""
@@ -33,3 +35,15 @@ class Event(models.Model):
 
     def __str__(self):
         return self.title
+
+    def clean(self):
+        if self.enable_registration and not self.registration_url:
+            raise ValidationError(
+                {"registration_url": "Укажите ссылку на регистрацию, если она включена."}
+            )
+
+        if self.enable_tickets and not self.ticket_url:
+            raise ValidationError(
+                {"ticket_url": "Укажите ссылку на покупку билетов, если она включена."}
+            )
+
