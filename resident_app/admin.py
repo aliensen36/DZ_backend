@@ -3,6 +3,15 @@ from django.utils.html import format_html
 from .models import *
 from mailing_app.models import Subscription
 
+class MapMarkerInline(admin.StackedInline):
+    model = MapMarker
+    extra = 0
+    can_delete = False
+    verbose_name = 'Координаты на карте'
+    verbose_name_plural = 'Координаты на карте'
+    fields = ('x', 'y')
+
+
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('name',)
@@ -21,10 +30,11 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Resident)
 class ResidentAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-    list_display_links = ('name',)
-    list_filter = ('floor', 'office')
-    search_fields = ('name', 'description', 'full_address', 'email', 'phone_number', 'pin_code')
+    inlines = [MapMarkerInline]
+    list_display = ('name', 'building', 'entrance', 'floor', 'office')
+    list_display_links = ('name', 'building', 'entrance', 'floor', 'office')
+    list_filter = ('building', 'entrance', 'floor', 'office')
+    search_fields = ('name', 'email', 'phone_number', 'pin_code')
     list_per_page = 20
     ordering = ('name',)
     filter_horizontal = ('categories',)
@@ -33,14 +43,20 @@ class ResidentAdmin(admin.ModelAdmin):
         """Динамически добавляет photo_preview только при редактировании"""
         fieldsets = [
             ('Основная информация', {
-                'fields': ('name', 'categories', 'description', 'info')
+                'fields': (
+                    'name',
+                    'categories',
+                    'description',
+                    'info',
+                    'points_per_100_rubles',
+                    'max_deduct_percent'
+                )
             }),
             ('Контактные данные', {
                 'fields': ('email', 'phone_number', 'official_website')
             }),
-            ('Расположение', {
-                'fields': ('full_address', 'floor', 'office'),
-                'description': 'Укажите точное расположение на территории завода'
+            ('Адрес', {
+                'fields': ('address', 'building', 'entrance', 'floor', 'office'),
             }),
             ('График работы', {
                 'fields': ('working_time',),
@@ -48,9 +64,8 @@ class ResidentAdmin(admin.ModelAdmin):
             }),
         ]
 
-        # Добавляем фото и пин-код
         photo_fields = ['photo', 'pin_code']
-        if obj:  # только если объект уже существует
+        if obj:
             photo_fields.insert(1, 'photo_preview')
 
         fieldsets.append((
@@ -61,10 +76,9 @@ class ResidentAdmin(admin.ModelAdmin):
         return fieldsets
 
     def get_readonly_fields(self, request, obj=None):
-        """email, phone_number и pin_code нельзя менять при редактировании"""
         ro = ['pin_code']
         if obj:
-            ro += ['email', 'phone_number', 'photo_preview']
+            ro += ['photo_preview']
         return ro
 
     def floor_office(self, obj):

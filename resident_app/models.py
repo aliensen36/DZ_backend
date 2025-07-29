@@ -1,5 +1,5 @@
 from django.db import models
-from user_app.models import User
+
 
 
 class Category(models.Model):
@@ -22,12 +22,15 @@ class Resident(models.Model):
     email = models.EmailField(max_length=255, unique=True, blank=True, null=True, verbose_name='Email')
     phone_number = models.CharField(max_length=16, unique=True, blank=True, null=True, verbose_name='Номер телефона')
     official_website = models.URLField(max_length=255, unique=True, blank=True, null=True, verbose_name='Официальный сайт')
-    full_address = models.CharField(max_length=255, verbose_name='Полный адрес на территории завода')
+    address = models.CharField(max_length=255, verbose_name='Адрес', default='ул. Большая Новодмитровская, д. 36')
+    building = models.CharField(max_length=20, verbose_name='Строение')
+    entrance = models.CharField(max_length=50, verbose_name='Вход', null=True, blank=True)
     floor = models.IntegerField(verbose_name='Этаж')
     office = models.IntegerField(unique=True, verbose_name='Офис/Помещение')
     photo = models.ImageField(upload_to='residents/photos/', null=True, blank=True, verbose_name='Фото')
     pin_code = models.CharField(max_length=6, unique=True, verbose_name='Пин-код')
-
+    points_per_100_rubles = models.PositiveIntegerField(null=True, blank=True, verbose_name='Кол-во баллов за 100 р.')
+    max_deduct_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Максимальный процент списания от суммы покупки')
     categories = models.ManyToManyField(Category, related_name='residents', verbose_name='Категории')
 
     def __str__(self):
@@ -49,3 +52,15 @@ class Resident(models.Model):
             pin = ''.join(random.choices(string.digits, k=6))
             if not Resident.objects.filter(pin_code=pin).exists():
                 return pin
+
+class MapMarker(models.Model):
+    resident = models.OneToOneField('Resident', on_delete=models.CASCADE, related_name='map_marker', verbose_name='Резидент')
+    x = models.FloatField(verbose_name='Координата X')
+    y = models.FloatField(verbose_name='Координата Y')
+
+    def __str__(self):
+        return f"Метка {self.resident.name} ({self.x}, {self.y})"
+
+    class Meta:
+        verbose_name = 'Метка на карте'
+        verbose_name_plural = 'Метки на карте'

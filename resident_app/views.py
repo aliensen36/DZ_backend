@@ -5,23 +5,30 @@ from rest_framework import status
 from rest_framework.views import APIView
 from .models import Category, Resident
 from mailing_app.models import Subscription
-from .serializers import ResidentSerializer, CategorySerializer
+from .serializers import ResidentSerializer, CategorySerializer, ResidentMapSerializer
 from user_app.auth.permissions import IsAdmin, IsBotAuthenticated
+from drf_spectacular.utils import (
+    extend_schema, extend_schema_view, OpenApiParameter, OpenApiTypes
+)
 
 
+@extend_schema_view(
+    list=extend_schema(summary="Список категорий"),
+    retrieve=extend_schema(summary="Получить категорию по ID"),
+    create=extend_schema(summary="Создать категорию"),
+    update=extend_schema(summary="Обновить категорию"),
+    partial_update=extend_schema(summary="Частично обновить категорию"),
+    destroy=extend_schema(summary="Удалить категорию"),
+)
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    # permission_classes = [AllowAny] # Только в разработке
-    # permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
     permission_classes = [IsBotAuthenticated | IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         category = serializer.save()
-
-        # Автоматическое создание подписки, при создании категории
         Subscription.objects.create(
             name=category.name,
             description=category.description
@@ -29,11 +36,28 @@ class CategoryViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="Список резидентов",
+        parameters=[
+            OpenApiParameter(
+                name='category_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description='Фильтрация по ID категории'
+            )
+        ]
+    ),
+    retrieve=extend_schema(summary="Получить резидента по ID"),
+    create=extend_schema(summary="Создать резидента"),
+    update=extend_schema(summary="Обновить резидента"),
+    partial_update=extend_schema(summary="Частично обновить резидента"),
+    destroy=extend_schema(summary="Удалить резидента"),
+)
 class ResidentViewSet(viewsets.ModelViewSet):
     queryset = Resident.objects.all()
     serializer_class = ResidentSerializer
-    # permission_classes = [AllowAny]  # Только в разработке
-    # permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
     permission_classes = [IsBotAuthenticated | IsAuthenticated]
 
     def get_queryset(self):
@@ -55,12 +79,28 @@ class ResidentViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data)
-    
+
 
 class PinCodeVerifyView(APIView):
-    # permission_classes = [AllowAny]  # Только в разработке
-    # permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
     permission_classes = [IsBotAuthenticated | IsAuthenticated]
+
+    @extend_schema(
+        summary="Проверка пин-кода резидента",
+        description="Принимает pin_code и возвращает информацию о резиденте, если код верный.",
+        request={
+            'application/json': {
+                'type': 'object',
+                'properties': {
+                    'pin_code': {'type': 'string'}
+                },
+                'required': ['pin_code']
+            }
+        },
+        responses={
+            200: ResidentSerializer,
+            401: OpenApiTypes.OBJECT,
+        },
+    )
     def post(self, request):
         pin_code = request.data.get('pin_code')
         try:
@@ -75,3 +115,33 @@ class PinCodeVerifyView(APIView):
                 'status': 'error',
                 'message': 'Неверный пин-код или пользователь не является администратором'
             }, status=status.HTTP_401_UNAUTHORIZED)
+
+
+class MapResidentListView(APIView):
+    permission_classes = [IsBotAuthenticated | IsAuthenticated]
+
+    @extend_schema(
+        summary="Список резидентов с координатами (для карты)",
+        description="Возвращает резидентов и их метки на карте. Фильтрация по категориям.",
+        parameters=[
+            OpenApiParameter(
+                name='category_id',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description='Список ID категорий через запятую, например: `1,2,3`'
+            )
+        ],
+        responses={200: ResidentMapSerializer(many=True)},
+    )
+    def get(self, request):
+        category_ids = request.query_params.get('category_id')
+
+        queryset = Resident.objects.prefetch_related('categories', 'map_marker')
+
+        if category_ids:
+            ids = [int(i) for i in category_ids.split(',') if i.isdigit()]
+            queryset = queryset.filter(categories__in=ids).distinct()
+
+        serializer = ResidentMapSerializer(queryset, many=True)
+        return Response(serializer.data)

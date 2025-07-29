@@ -71,7 +71,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
-
     'rest_framework',
     'drf_spectacular',
     'django_celery_beat',
@@ -83,6 +82,7 @@ INSTALLED_APPS = [
     'event_app.apps.EventAppConfig',
     'faq_app.apps.FaqAppConfig',
     'avatar_app.apps.AvatarAppConfig',
+    'route_app.apps.RouteAppConfig',
 ]
 
 MIDDLEWARE = [
