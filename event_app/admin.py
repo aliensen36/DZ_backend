@@ -1,4 +1,3 @@
-from django.contrib import admin
 from django.utils.html import format_html
 from django.utils import timezone
 from .models import *
@@ -19,37 +18,46 @@ class EventAdminForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
 
-        # Проверка для регистрации
-        if cleaned_data.get("enable_registration") and not cleaned_data.get("registration_url"):
-            raise forms.ValidationError(
-                "Укажите ссылку на регистрацию, если она включена."
-            )
+        enable_registration = cleaned_data.get('enable_registration')
+        registration_url = cleaned_data.get('registration_url')
+        enable_tickets = cleaned_data.get('enable_tickets')
+        ticket_url = cleaned_data.get('ticket_url')
 
-        # Проверка для билетов
-        if cleaned_data.get("enable_tickets") and not cleaned_data.get("ticket_url"):
-            raise forms.ValidationError(
-                "Укажите ссылку на покупку билетов, если она включена."
-            )
+        errors = {}
+
+        if enable_registration and not registration_url:
+            errors['registration_url'] = 'Укажите ссылку на регистрацию, если она включена.'
+
+        if enable_tickets and not ticket_url:
+            errors['ticket_url'] = 'Укажите ссылку на покупку билетов, если она включена.'
+
+        if errors:
+            raise forms.ValidationError(errors)
 
         return cleaned_data
 
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
+    form = EventAdminForm
     list_display = (
         'title',
         'date_range',
         'location',
         'is_active',
     )
-    list_display_links = ('title',)
+    list_display_links = (
+        'title',
+        'date_range',
+        'location',
+        'is_active',)
     list_filter = ('start_date', 'end_date', 'location')
     search_fields = ('title', 'description', 'info', 'location')
     list_per_page = 20
     ordering = ('start_date',)
 
     def get_fieldsets(self, request, obj=None):
-        fieldsets = (
+        fieldsets = [
             ('Основная информация', {
                 'fields': ('title', 'description', 'info')
             }),
@@ -59,27 +67,33 @@ class EventAdmin(admin.ModelAdmin):
             ('Фото мероприятия', {
                 'fields': ('photo', 'photo_preview')
             }),
+            ("Регистрация", {
+                "fields": ["enable_registration", "registration_url"],
+            }),
+            ("Билеты", {
+                "fields": ["enable_tickets", "ticket_url"],
+            }),
             ('Служебная информация', {
                 'fields': ('created_at',),
                 'classes': ('collapse',)
             }),
-            ("Регистрация", {
-                "fields": ["enable_registration"],
-                "classes": ("collapse",),
-            }),
-            ("Билеты", {
-                "fields": ["enable_tickets"],
-                "classes": ("collapse",),
-            }),
-        )
+        ]
 
+        # Преобразуем в список, чтобы можно было модифицировать
+        fieldsets = [list(fs) for fs in fieldsets]
 
-        # Добавляем поля ссылок, только если флажки включены
         if obj and obj.enable_registration:
-            fieldsets[4][1]["fields"].append("registration_url")
+            fieldsets[3][1] = dict(fieldsets[3][1])  # копируем словарь
+            fieldsets[3][1]["fields"] = list(fieldsets[3][1]["fields"])  # копируем список
+            fieldsets[3][1]["fields"].append("registration_url")
 
         if obj and obj.enable_tickets:
-            fieldsets[5][1]["fields"].append("ticket_url")
+            fieldsets[4][1] = dict(fieldsets[4][1])
+            fieldsets[4][1]["fields"] = list(fieldsets[4][1]["fields"])
+            fieldsets[4][1]["fields"].append("ticket_url")
+
+        # Преобразуем обратно в кортежи
+        fieldsets = [tuple(fs) for fs in fieldsets]
 
         return fieldsets
 
@@ -102,6 +116,12 @@ class EventAdmin(admin.ModelAdmin):
         return "Нет фото"
     photo_preview.short_description = "Превью фото"
 
+    def get_form(self, request, obj=None, **kwargs):
+        form_class = super().get_form(request, obj, **kwargs)
 
+        class AdminFormWithRequest(form_class):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.request = request
 
-
+        return AdminFormWithRequest
