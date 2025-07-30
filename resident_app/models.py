@@ -29,8 +29,7 @@ class Resident(models.Model):
     office = models.IntegerField(unique=True, verbose_name='Офис/Помещение')
     photo = models.ImageField(upload_to='residents/photos/', null=True, blank=True, verbose_name='Фото')
     pin_code = models.CharField(max_length=6, unique=True, verbose_name='Пин-код')
-    points_per_100_rubles = models.PositiveIntegerField(null=True, blank=True, verbose_name='Кол-во баллов за 100 р.')
-    max_deduct_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Максимальный процент списания от суммы покупки')
+    
     categories = models.ManyToManyField(Category, related_name='residents', verbose_name='Категории')
 
     def __str__(self):

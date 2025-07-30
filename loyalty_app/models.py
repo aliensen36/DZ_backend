@@ -59,6 +59,20 @@ class PointsTransaction(models.Model):
         return f"{self.transaction_type.capitalize()} {self.points} баллов"
     
 
+class PointsSystemSettings(models.Model):
+    points_per_100_rubles = models.PositiveIntegerField(verbose_name='Кол-во баллов за 100 р.')
+    points_per_1_percent = models.PositiveIntegerField(verbose_name='Кол-во баллов за 1%')
+
+    def save(self, *args, **kwargs):
+        if not self.pk and PointsSystemSettings.objects.exists():
+            raise ValueError('You can only create one entry PointsSystemSettings')
+        super().save(*args, **kwargs)
+
+    class Meta:
+        verbose_name = 'Настройки программы лояльности'
+        verbose_name_plural = 'Настройки программы лояльности'
+    
+
 class Promotion(models.Model):
     title = models.CharField(max_length=255, verbose_name='Название акции')
     description = models.TextField(verbose_name='Описание акции')
@@ -66,7 +80,6 @@ class Promotion(models.Model):
     end_date = models.DateTimeField(verbose_name='Дата окончания акции')
     photo = models.ImageField(upload_to='promotions/photos/', verbose_name='Фото акции')
     is_approved = models.BooleanField(default=False, verbose_name='Одобрена ли акция')
-    url = models.URLField(max_length=255, verbose_name='Ссылка на участие в акции')
     discount_percent = models.DecimalField(max_digits=5, decimal_places=2, null=False, blank=False, verbose_name='Процент скидки')
     promotional_code = models.CharField(max_length=20, unique=True, verbose_name='Промокод')
     resident = models.ForeignKey(Resident, on_delete=models.CASCADE, related_name='promotions', verbose_name='Резидент')
@@ -82,9 +95,38 @@ class Promotion(models.Model):
         super().__init__(*args, **kwargs)
         self._original_is_approved = self.is_approved
 
+    def percent_equals_points(self):
+        """Возвращает процент скидки и количество бонусов."""
+        try:
+            settings_instance = PointsSystemSettings.objects.first()
+            if settings_instance:
+                points = round(float(self.discount_percent) * settings_instance.points_per_1_percent)
+                return f"{self.discount_percent}% = {points} бонусов"
+            else:
+                return "Настройки бонусов не заданы"
+        except Exception as e:
+            return f"Ошибка: {e}"
+
     class Meta:
         verbose_name = 'Акция'
         verbose_name_plural = 'Акции'
 
     def __str__(self):
         return self.title
+    
+
+class UserPromotion(models.Model):
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='user_promotions')
+    promotion = models.ForeignKey(Promotion, on_delete=models.CASCADE, related_name='purchased_by_users')
+    redeemed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'promotion')
+        verbose_name = 'Участие пользователя в акции'
+        verbose_name_plural = 'Участия пользователей в акциях'
+        ordering = ['-redeemed_at']
+
+    def __str__(self):
+        return f"{self.user} — {self.promotion.title}"
+    
+

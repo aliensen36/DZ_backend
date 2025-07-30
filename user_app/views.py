@@ -1,4 +1,5 @@
 import logging
+from django.utils import timezone
 
 from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
@@ -12,6 +13,8 @@ from django.conf import settings
 from .serializers import UserSerializer
 from avatar_app.serializers import UserAvatarProgressSerializer, UserAvatarDetailSerializer
 from avatar_app.models import UserAvatarProgress
+from loyalty_app.serializers import UserPromotionDisplaySerializer, PointsTransactionSerializer
+from loyalty_app.models import UserPromotion, PointsTransaction
 from .models import Referral
 
 
@@ -155,6 +158,37 @@ class UserMeViewSet(viewsets.ViewSet):
         data["avatar"] = UserAvatarDetailSerializer(user_avatar).data if user_avatar else None
 
         return Response(data)
+    
+    @action(detail=False, methods=['get'], url_path='me/promocodes')
+    def my_promocodes(self, request):
+        """
+        Возвращает список активных промокодов пользователя.
+        """
+        user = request.user
+        user_promotions = UserPromotion.objects.filter(
+            user=user,
+            promotion__end_date__gte=timezone.now()
+        )
+
+        if not user_promotions.exists():
+            return Response({'error': 'У Вас нет активных промокодов.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UserPromotionDisplaySerializer(user_promotions, many=True)
+        return Response({'promotions': serializer.data}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get'], url_path='me/promocode')
+    def promocode_detail(self, request, pk=None):
+        """
+        Возвращает детальную информацию по одному промокоду пользователя.
+        """
+        user = request.user
+        try:
+            user_promotion = UserPromotion.objects.get(pk=pk, user=user)
+        except UserPromotion.DoesNotExist:
+            return Response({'error': 'Промокод не найден.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UserPromotionDisplaySerializer(user_promotion)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['patch'], url_path='me/update')
     def update_me(self, request):
@@ -177,7 +211,6 @@ class UserMeViewSet(viewsets.ViewSet):
         """
         user = request.user
 
-        # Пытаемся найти или создать referral
         referral, _ = Referral.objects.get_or_create(
             inviter=user,
             invitee=None,
@@ -189,15 +222,27 @@ class UserMeViewSet(viewsets.ViewSet):
 
         return Response({'referral_link': referral_link})
     
-
-class UserAvatarProgressViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [AllowAny]
-    serializer_class = UserAvatarProgressSerializer
-
-    def get_queryset(self):
+    @action(detail=False, methods=['get'], url_path='me/avatars')
+    def my_avatars(self, request):
         """
-        Эндпоинт для просмотра всех аватаров, которых пользователь уже выбрал.
+        Возвращает список всех аватаров, выбранных пользователем.
         """
-        return UserAvatarProgress.objects.filter(user=self.request.user).select_related(
+        user = request.user
+        queryset = UserAvatarProgress.objects.filter(user=user).select_related(
             'avatar', 'current_stage'
         ).prefetch_related('avatar__avatar_stages__stage')
+
+        serializer = UserAvatarProgressSerializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'], url_path='me/points-transactions')
+    def points_transactions(self, request):
+        user = request.user
+
+        if not hasattr(user, 'loyalty_card'):
+            return Response({'error': 'У Вас нет карты лояльности.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        queryset = PointsTransaction.objects.filter(card_id=user.loyalty_card)
+        serializer = PointsTransactionSerializer(queryset, many=True)
+        return Response(serializer.data)
+    
