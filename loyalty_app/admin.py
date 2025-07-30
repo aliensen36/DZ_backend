@@ -5,11 +5,11 @@ from django.db import models
 from django.contrib import admin
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ValidationError
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.html import format_html
 from django.forms import Textarea
-from .models import LoyaltyCard, PointsTransaction, Promotion
+from .models import LoyaltyCard, PointsTransaction, Promotion, PointsSystemSettings, UserPromotion
 from avatar_app.models import UserAvatarProgress
 from django.contrib.auth import get_user_model
 
@@ -230,6 +230,48 @@ class PointsTransactionAdmin(admin.ModelAdmin):
             progress.total_spending += obj.price
             progress.check_for_upgrade()
 
+class PointsSystemSettingsAdminForm(forms.ModelForm):
+    class Meta:
+        model = PointsSystemSettings
+        fields = '__all__'
+
+    def clean(self):
+        cleaned_data = super().clean()
+        points_per_100_rubles = cleaned_data.get('points_per_100_rubles')
+        points_per_1_percent = cleaned_data.get('points_per_1_percent')
+
+        if points_per_100_rubles is not None and points_per_100_rubles <= 0:
+            raise ValidationError("Количество бонусов за 100 рублей должно быть положительным числом.")
+
+        if points_per_1_percent is not None and points_per_1_percent <= 0:
+            raise ValidationError("Количество бонусов за 1% скидки должно быть положительным числом.")
+
+        return cleaned_data
+
+@admin.register(PointsSystemSettings)
+class PointsSystemSettingsAdmin(admin.ModelAdmin):
+    form = PointsSystemSettingsAdminForm
+    
+    list_display = ('points_per_100_rubles', 'points_per_1_percent')
+    list_display_links = ('points_per_100_rubles', 'points_per_1_percent')
+    list_filter = ('points_per_100_rubles', 'points_per_1_percent')
+    search_fields = ('points_per_100_rubles', 'points_per_1_percent')
+
+    def has_add_permission(self, request):
+        '''Разрешить добавление только если записи нет'''
+        return not PointsSystemSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        '''Запретить удаление'''
+        return False
+
+    def changelist_view(self, request, extra_context=None):
+        '''Если запись существует — редирект на редактирование'''
+        obj = PointsSystemSettings.objects.first()
+        if obj:
+            return HttpResponseRedirect(reverse('admin:loyalty_app_pointssystemsettings_change', args=(obj.id,)))
+        return super().changelist_view(request, extra_context)
+
 
 class PromotionAdminForm(forms.ModelForm):
     class Meta:
@@ -263,7 +305,7 @@ class PromotionAdmin(admin.ModelAdmin):
         'resident',
         'start_date',
         'end_date',
-        'discount_percent',
+        'percent_equals_points_display',
         'is_approved',
     )
     list_filter = ('is_approved', 'discount_percent', 'start_date', 'end_date')
@@ -289,11 +331,20 @@ class PromotionAdmin(admin.ModelAdmin):
         }),
     )
 
-    def discount_or_bonus_display(self, obj):
-        return f'{obj.discount_percent}%'
-    discount_or_bonus_display.short_description = 'Скидка'
+    def percent_equals_points_display(self, obj):
+        return obj.percent_equals_points()
+    percent_equals_points_display.short_description = 'Скидка = Бонусы'
 
     def photo_preview(self, obj):
         if obj and obj.photo:
             return format_html('<img src="{}" style="max-height: 200px;"/>', obj.photo.url)
         return "Нет фото"
+
+
+@admin.register(UserPromotion)
+class UserPromotionAdmin(admin.ModelAdmin):
+    list_display = ('user', 'promotion', 'redeemed_at')
+    list_display_links =  ('user', 'promotion', 'redeemed_at')
+    list_filter =  ('user', 'promotion', 'redeemed_at')
+    search_fields =  ('user', 'promotion', 'redeemed_at')
+    readonly_fields = ('redeemed_at',)

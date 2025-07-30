@@ -1,19 +1,19 @@
+from datetime import timezone
 from django.conf import settings
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 import os
-from decimal import Decimal, InvalidOperation
 from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from user_app.auth.permissions import IsBotAuthenticated, IsResident, IsAdmin
+from rest_framework.permissions import IsAuthenticated
+from user_app.auth.permissions import IsBotAuthenticated, IsAdmin
 from user_app.serializers import UserSerializer
-from .models import LoyaltyCard, PointsTransaction, Promotion
+from .models import LoyaltyCard, PointsTransaction, Promotion, PointsSystemSettings
 from resident_app.models import Resident
-from .serializers import PointsTransactionSerializer, PromotionSerializer
+from .serializers import PointsTransactionSerializer, PromotionSerializer, UserPromotionSerializer, PointsSystemSettingsSerializer
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse, OpenApiTypes, OpenApiExample
 from avatar_app.models import UserAvatarProgress
 
@@ -276,11 +276,8 @@ class PointsTransactionResidenrViewSet(viewsets.ModelViewSet):
         if not resident_id:
             return Response({'error': 'Не передан X-Resident-ID в заголовке'}, status=status.HTTP_400_BAD_REQUEST)
         
-        try:
-            resident = Resident.objects.get(id=resident_id)
-        except Resident.DoesNotExist:
+        if not Resident.objects.filter(id=resident_id).exists():
             return Response({'error': 'Резидент с таким ID не найден'}, status=status.HTTP_404_NOT_FOUND)
-
         
         card_id = request.data.get('card_id')
         try:
@@ -288,10 +285,16 @@ class PointsTransactionResidenrViewSet(viewsets.ModelViewSet):
         except LoyaltyCard.DoesNotExist:
             return Response({'error': 'Карта лояльности не найдена'}, status=status.HTTP_404_NOT_FOUND)
         
-        points_per_100_rub = resident.points_per_100_rubles
+        points_settings = PointsSystemSettings.objects.first()
 
-        accrue_points = int(price) * points_per_100_rub // 100
-        if accrue_points <= 0:
+        if not points_settings:
+            return Response({'error': 'Настройки программы лояльности не найдены'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            points_per_100_rub = points_settings.points_per_100_rubles
+
+        points_to_accrue = round(int(price) * points_per_100_rub // 100)
+
+        if points_to_accrue <= 0:
             return Response({'error': 'Недостаточно суммы для начисления баллов'}, status=status.HTTP_400_BAD_REQUEST)
 
         user = card.user
@@ -305,7 +308,7 @@ class PointsTransactionResidenrViewSet(viewsets.ModelViewSet):
 
         transaction_data = {
             'price': price,
-            'points': accrue_points,
+            'points': points_to_accrue,
             'transaction_type': 'начисление',
             'card_id': request.data.get('card_id'),
             'resident_id': resident_id,
@@ -316,122 +319,17 @@ class PointsTransactionResidenrViewSet(viewsets.ModelViewSet):
         serializer.save()
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    @extend_schema(
-        description="Метод для списания баллов. Баллы списываются на основе указанной суммы.",
-        request=PointsTransactionSerializer,
-        responses={
-            201: OpenApiResponse(description="Транзакция успешно создана", response=PointsTransactionSerializer),
-            400: OpenApiResponse(description="Ошибка при списании баллов"),
-            404: OpenApiResponse(description="Карта не найдена"),
-        },
-        parameters=[
-            OpenApiParameter(
-                name="price",  
-                type=OpenApiTypes.NUMBER,  
-                description="Сумма для списания баллов (в рублях)", 
-                examples=[OpenApiExample(name="default", value=500)],  # Пример с использованием OpenApiExample
-            ),
-            OpenApiParameter(
-                name="card_id",  
-                type=OpenApiTypes.INT,  
-                description="ID карты лояльности", 
-                examples=[OpenApiExample(name="default", value=1)], 
-            ),
-            OpenApiParameter(
-                name="resident_id",  
-                type=OpenApiTypes.INT,  
-                description="ID резидента", 
-                examples=[OpenApiExample(name="default", value=2)],
-            ),
-        ]
-    )
-    @action(detail=False, methods=['post'], url_path='deduct')
-    def deduct_points(self, request):
-        try:
-            # Конвертируем price в Decimal для согласованности типов
-            from decimal import Decimal
-            price = Decimal(str(request.data.get('price')))
-        except (TypeError, ValueError, InvalidOperation):
-            return Response({'error': 'Сумма должна быть числом.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if price <= 0:
-            return Response({'error': 'Сумма должна быть положительной.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        card_id = request.data.get('card_id')
-        resident_id = request.headers.get('X-Resident-ID')
-
-        if not card_id or not resident_id:
-            return Response({'error': 'Необходимо указать ID карты и ID резидента.'},
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            card = LoyaltyCard.objects.get(id=card_id)
-        except LoyaltyCard.DoesNotExist:
-            return Response({'error': 'Карта не найдена.'}, status=status.HTTP_404_NOT_FOUND)
-
-        try:
-            resident = Resident.objects.get(id=resident_id)
-        except Resident.DoesNotExist:
-            return Response({'error': 'Резидент с таким ID не найден'}, status=status.HTTP_404_NOT_FOUND)
-
-        current_balance = card.get_balance()
-        max_deduct_percent = resident.max_deduct_percent
-
-        # Убедимся, что max_deduct_percent обрабатывается как Decimal
-        max_deduct_percent = Decimal(str(max_deduct_percent))
-
-        # Расчет с использованием Decimal
-        max_deductible_points = int((price * max_deduct_percent) / Decimal('100'))
-
-        if max_deductible_points <= 0:
-            return Response({'error': 'Недостаточная сумма для списания баллов.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if current_balance < max_deductible_points:
-            return Response({
-                'error': f'Недостаточно баллов.\n'
-                         f'Баланс: <b>{current_balance}</b>.\n'
-                         f'требуется: <b>{max_deductible_points}</b>'
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        transaction_data = {
-            'points': -max_deductible_points,
-            'price': float(price),  # Сохраняем как float, если модель ожидает float
-            'transaction_type': 'списание',
-            'card_id': card_id,
-            'resident_id': resident_id
-        }
-
-        serializer = self.get_serializer(data=transaction_data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
-class PointsTransactionUserViewSet(viewsets.ReadOnlyModelViewSet):
-    serializer_class = PointsTransactionSerializer
-    # permission_classes = [AllowAny] # Потом заменить на IsAuthenticated
-    permission_classes = [IsBotAuthenticated | IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-
-        if not hasattr(user, 'loyalty_card'):
-            return PointsTransaction.objects.none()
-
-        return PointsTransaction.objects.filter(card_id=user.loyalty_card)
     
 
 class PromotionViewSet(viewsets.ModelViewSet):
-    queryset = Promotion.objects.all()
     serializer_class = PromotionSerializer
     # permission_classes = [AllowAny]  # Только в разработке
     # permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsResident)]
     permission_classes = [IsBotAuthenticated | IsAuthenticated]
 
     def get_queryset(self):
-        queryset = super().get_queryset().filter(is_approved=True)
+        queryset = Promotion.objects.all().filter(is_approved=True)
+
         resident_id = self.request.query_params.get('resident')
         if resident_id:
             try:
@@ -542,4 +440,91 @@ class PromotionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         
-    
+    @action(detail=True, methods=['post'], url_path='buy-promocode')
+    def buy_promocode(self, request, pk=None):
+        user = request.user
+
+        try:
+            promotion = self.get_object()
+        except Promotion.DoesNotExist:
+            return Response({'error': 'Акция не найдена.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if promotion.end_date < timezone.now():
+            return Response({'error': 'Акция уже завершилась.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            card = LoyaltyCard.objects.get(user=user)
+        except LoyaltyCard.DoesNotExist:
+            return Response({'error': 'Карта не найдена.'}, status=status.HTTP_404_NOT_FOUND)
+
+        points_settings = PointsSystemSettings.objects.first()
+        if not points_settings:
+            return Response({'error': 'Настройки программы лояльности не найдены'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        points_per_1_percent = points_settings.points_per_1_percent
+        current_balance = card.get_balance()
+        points_to_deduct = round(float(promotion.discount_percent) * points_per_1_percent)
+
+        if current_balance < points_to_deduct:
+            return Response({
+                'error': f'Недостаточно баллов.\n'
+                        f'Баланс: <b>{current_balance}</b>.\n'
+                        f'требуется: <b>{points_to_deduct}</b>'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        PointsTransaction.objects.create(
+            points=points_to_deduct,
+            price=0.0,
+            transaction_type='списание',
+            card_id=card,
+            resident_id=promotion.resident
+        )
+
+        serializer = UserPromotionSerializer(data={'user': user.id, 'promotion': promotion.id})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response({
+            'message': 'Промокод успешно активирован.',
+            'promotion': promotion.title,
+            'promotional_code': promotion.promotional_code,
+            'discount_percent': promotion.discount_percent,
+            'points_to_deduct': points_to_deduct
+        }, status=status.HTTP_201_CREATED)
+        
+
+class PointsSystemSettingsViewSet(viewsets.ViewSet):
+    queryset = PointsSystemSettings.objects.all()
+    serializer_class = PointsSystemSettingsSerializer
+    permission_classes = [IsBotAuthenticated | IsAuthenticated]
+
+    @action(detail=False, methods=["get"], url_path="single")
+    def get_single(self, request):
+        settings = PointsSystemSettings.objects.first()
+        if not settings:
+            return Response({"detail": "Настройки не найдены"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.serializer_class(settings)
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        if PointsSystemSettings.objects.exists():
+            return Response(
+                {"detail": "Настройки программы лояльности уже созданы"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        settings = serializer.save()
+        return Response(self.serializer_class(settings).data, status=status.HTTP_201_CREATED)
+
+    def partial_update(self, request, pk=None, *args, **kwargs):
+        settings = PointsSystemSettings.objects.filter(pk=pk).first()
+        if not settings:
+            return Response({"detail": "Настройки программы лояльности не найдены"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.serializer_class(settings, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+

@@ -48,8 +48,6 @@ class ResidentAdmin(admin.ModelAdmin):
                     'categories',
                     'description',
                     'info',
-                    'points_per_100_rubles',
-                    'max_deduct_percent'
                 )
             }),
             ('Контактные данные', {
