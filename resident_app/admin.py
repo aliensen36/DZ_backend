@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import *
+
+from .models import MapMarker, Category, Resident
 from mailing_app.models import Subscription
 
 class MapMarkerInline(admin.StackedInline):

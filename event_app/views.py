@@ -11,6 +11,9 @@ from .models import Event
 from .serializers import EventSerializer
 from user_app.auth.permissions import IsAdmin, IsBotAuthenticated
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all()
@@ -19,7 +22,7 @@ class EventViewSet(viewsets.ModelViewSet):
     permission_classes = [IsBotAuthenticated | IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
 
-    @action(detail=False, methods=['get'], url_path='today')
+    @action(detail=False, methods=["get"], url_path="today")
     def today_events(self, request):
         """
         Возвращает мероприятия, которые проходят сегодня.
@@ -27,15 +30,16 @@ class EventViewSet(viewsets.ModelViewSet):
         today = timezone.localdate()
         events = self.queryset.filter(
             Q(start_date__date__lte=today) & Q(end_date__date__gte=today)
-        ).order_by('-created_at')
-        
+        ).order_by("-created_at")
         if not events.exists():
-            return Response({'detail': 'На сегодня мероприятий нет.'}, status=status.HTTP_204_NO_CONTENT)
-        
+            return Response(
+                {"detail": "На сегодня мероприятий нет."},
+                status=status.HTTP_204_NO_CONTENT,
+            )
         serializer = self.get_serializer(events, many=True)
         return Response(serializer.data)
 
-    @action(detail=False, methods=['get'], url_path='exclude_today')
+    @action(detail=False, methods=["get"], url_path="exclude_today")
     def exclude_today_events(self, request):
         """
         Возвращает мероприятия, которые НЕ проходят сегодня.
@@ -43,34 +47,41 @@ class EventViewSet(viewsets.ModelViewSet):
         today = timezone.localdate()
         events = self.queryset.exclude(
             Q(start_date__date__lte=today) & Q(end_date__date__gte=today)
-        ).order_by('-created_at')
-
+        ).order_by("-created_at")
         if not events.exists():
-            return Response({'detail': 'Все мероприятия проходят сегодня.'}, status=status.HTTP_204_NO_CONTENT)
-    
+            return Response(
+                {"detail": "Все мероприятия проходят сегодня."},
+                status=status.HTTP_204_NO_CONTENT,
+            )
         serializer = self.get_serializer(events, many=True)
         return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
-        if 'photo' not in request.FILES:
-            return Response({"photo": ["Фото мероприятия обязательно."]}, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = self.get_serializer(data=request.data, context={'request': request})
+        logger.debug(f"Received create event request with data: {request.data}")
+        if "photo" not in request.FILES:
+            logger.error("No photo provided in create event request")
+            return Response(
+                {"photo": ["Фото мероприятия обязательно."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer = self.get_serializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
-        instance.photo = request.FILES['photo']
+        instance.photo = request.FILES["photo"]
         instance.save()
-
+        logger.info(f"Event created successfully: {instance.title}")
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def partial_update(self, request, *args, **kwargs):
+        logger.debug(f"Received partial update request for event {self.get_object().id} with data: {request.data}")
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True, context={'request': request})
+        serializer = self.get_serializer(
+            instance, data=request.data, partial=True, context={"request": request}
+        )
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
-
-        if 'photo' in request.FILES:
-            instance.photo = request.FILES['photo']
+        if "photo" in request.FILES:
+            instance.photo = request.FILES["photo"]
             instance.save()
-
+        logger.info(f"Event {instance.id} updated successfully")
         return Response(serializer.data)

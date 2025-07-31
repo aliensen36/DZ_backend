@@ -5,15 +5,17 @@ from .models import Event
 from django.conf import settings
 
 
-
 class EventSerializer(serializers.ModelSerializer):
     has_registration = serializers.SerializerMethodField()
     has_ticket = serializers.SerializerMethodField()
+    enable_registration = serializers.BooleanField(default=False)
+    enable_tickets = serializers.BooleanField(default=False)
 
     class Meta:
         model = Event
         fields = ['id', 'title', 'description', 'info', 'start_date', 'end_date', 'location',
-                  'photo', 'ticket_url', 'registration_url', 'created_at', 'has_registration', 'has_ticket' ]
+                  'photo', 'ticket_url', 'registration_url', 'created_at', 'has_registration', 'has_ticket', 
+                  'enable_registration', 'enable_tickets']
         extra_kwargs = {
             'photo': {'required': True}
         }
