@@ -33,8 +33,8 @@ def send_promotion_to_admin(sender, instance, created, **kwargs):
             f"<b>Акция {action}: {instance.title}</b>\n\n"
             f"Описание: {instance.description}\n\n"
             f"Период: {instance.start_date.strftime('%d.%m.%Y %H:%M')} - {instance.end_date.strftime('%d.%m.%Y %H:%M')}\n\n"
-            f"{instance.discount_or_bonus.capitalize()}: {instance.discount_or_bonus_value}{'%' if instance.discount_or_bonus == 'скидка' else ''}\n\n"
-            f"Ссылка: {instance.url}\n"
+            f"Скидка: {instance.discount_percent}%"
+            f"Промокод: {instance.promotional_code}"
             f"Статус: {'Подтверждена' if instance.is_approved else 'Ожидает подтверждения'}"
         )
 
@@ -106,10 +106,8 @@ def send_promotion_notification(sender, instance, created, **kwargs):
             text = (
                 f"<b>{instance.title}</b>\n\n"
                 f"{instance.start_date.strftime('%d.%m.%Y %H:%M')} - {instance.end_date.strftime('%d.%m.%Y %H:%M')}\n\n"
-                f"{instance.discount_or_bonus.capitalize()}: "
-                f"{instance.discount_or_bonus_value}{'%' if instance.discount_or_bonus == 'скидка' else ' бонусов'}\n\n"
+                f"{instance.discount_percent}%"
                 f"{instance.preview()}\n\n"
-                f"{instance.url}\n"
             )
 
             buttons = [[
