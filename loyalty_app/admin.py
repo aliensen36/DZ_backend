@@ -204,7 +204,7 @@ class PromotionAdmin(admin.ModelAdmin):
             'fields': ('start_date', 'end_date')
         }),
         ('Условия участия', {
-            'fields': ('discount_percent', 'url', 'promotional_code')
+            'fields': ('discount_percent', 'promotional_code')
         }),
         ('Привязка и статус', {
             'fields': ('resident', 'is_approved')
