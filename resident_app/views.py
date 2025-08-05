@@ -22,7 +22,23 @@ def get_descendants_ids(category):
     return list(descendants | {category.id})
 
 @extend_schema_view(
-    list=extend_schema(summary="Список категорий"),
+    list=extend_schema(
+        summary="Список категорий",
+        description=(
+            "Возвращает список категорий.\n\n"
+            "- По умолчанию возвращаются только **основные категории** (у которых `parent = null`).\n"
+            "- Если передать `?tree=true`, то возвращается **вся иерархия категорий**, включая подкатегории."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name='tree',
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description="Если `true` — вернуть все категории с вложенными подкатегориями"
+            )
+        ]
+    ),
     retrieve=extend_schema(summary="Получить категорию по ID"),
     create=extend_schema(summary="Создать категорию"),
     update=extend_schema(summary="Обновить категорию"),
@@ -40,6 +56,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
             return Category.objects.all().prefetch_related('children')
         return Category.objects.filter(parent__isnull=True).prefetch_related('children')
 
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -54,13 +71,25 @@ class CategoryViewSet(viewsets.ModelViewSet):
 @extend_schema_view(
     list=extend_schema(
         summary="Список резидентов",
+        description=(
+            "Возвращает список резидентов с возможностью фильтрации по категории.\n\n"
+            "- Если указан `category_id` и `main=true`, то выводятся все резиденты **основной категории** и всех её **подкатегорий**.\n"
+            "- Если `main` не указан или `false`, то фильтрация происходит **только по указанной категории**."
+        ),
         parameters=[
             OpenApiParameter(
                 name='category_id',
                 type=OpenApiTypes.INT,
                 location=OpenApiParameter.QUERY,
                 required=False,
-                description='Фильтрация по ID категории'
+                description="ID категории, по которой фильтруются резиденты"
+            ),
+            OpenApiParameter(
+                name='main',
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description="Если `true` и категория — основная, то включает резидентов подкатегорий"
             )
         ]
     ),
