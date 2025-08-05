@@ -1,10 +1,9 @@
 from django.db import models
 
-
-
 class Category(models.Model):
     name = models.CharField(max_length=255, null=False, verbose_name='Наименование категории')
     description = models.TextField(null=True, blank=True, verbose_name='Описание категории')
+    parent = models.ForeignKey('self', related_name='children', on_delete=models.CASCADE, null=True, blank=True, verbose_name='Родитель подкатегории')
 
     def __str__(self):
         return self.name
@@ -12,7 +11,6 @@ class Category(models.Model):
     class Meta:
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
-
 
 class Resident(models.Model):
     name = models.CharField(max_length=255, unique=True, verbose_name='Наименование')
