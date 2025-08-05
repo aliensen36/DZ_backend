@@ -12,6 +12,15 @@ from drf_spectacular.utils import (
 )
 
 
+def get_descendants_ids(category):
+    descendants = set()
+    def collect_children(cat):
+        for child in cat.children.all():
+            descendants.add(child.id)
+            collect_children(child)
+    collect_children(category)
+    return list(descendants | {category.id})
+
 @extend_schema_view(
     list=extend_schema(summary="Список категорий"),
     retrieve=extend_schema(summary="Получить категорию по ID"),
@@ -24,6 +33,12 @@ class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [IsBotAuthenticated | IsAuthenticated]
+
+    def get_queryset(self):
+        show_all = self.request.query_params.get('tree') == 'true'
+        if show_all:
+            return Category.objects.all().prefetch_related('children')
+        return Category.objects.filter(parent__isnull=True).prefetch_related('children')
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -63,9 +78,21 @@ class ResidentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         category_id = self.request.query_params.get('category_id')
+        is_main = self.request.query_params.get('main', 'false') == 'true'
+
         if category_id:
-            queryset = queryset.filter(categories__id=category_id)
-        return queryset
+            try:
+                category = Category.objects.get(id=category_id)
+            except Category.DoesNotExist:
+                return queryset.none()
+            
+            if is_main and category.parent is None:
+                descendant_ids = get_descendants_ids(category)
+                queryset = queryset.filter(categories__id__in=descendant_ids)
+            else:
+                queryset = queryset.filter(categories__id=category_id)
+
+        return queryset.distinct()
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
