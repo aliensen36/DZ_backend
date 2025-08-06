@@ -1,5 +1,5 @@
 from django.db import models
-
+from resident_app.models import Resident
 
 class Building(models.Model):
     name = models.CharField(max_length=100, verbose_name='Название')
@@ -88,6 +88,10 @@ class Route(models.Model):
                                        verbose_name='Начальная локация')
     end_location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='routes_end',
                                      verbose_name='Конечная локация')
+    image = models.ImageField(upload_to='routes/images/', verbose_name='Фото')
+    description = models.models.TextField(max_length=255, verbose_name='Описание')
+    fullDescription = models.CharField(verbose_name='Полное описание')
+    residents = models.ForeignKey(Resident, on_delete=models.CASCADE, related_name='routes', verbose_name='Резидент')
 
     class Meta:
         verbose_name = 'Маршрут'
