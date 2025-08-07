@@ -18,17 +18,6 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ('name', 'parent')
     search_fields = ('name', 'description', 'parent')
 
-    def save_model(self, request, obj, form, change):
-        super().save_model(request, obj, form, change)
-
-        # Автоматическое создание подписки, при создании категории
-        if not change: 
-            Subscription.objects.create(
-                name=obj.name,
-                description=obj.description
-            )
-
-
 @admin.register(Resident)
 class ResidentAdmin(admin.ModelAdmin):
     inlines = [MapMarkerInline]
