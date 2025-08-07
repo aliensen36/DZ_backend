@@ -1,6 +1,7 @@
 from django.db import models
 from resident_app.models import Resident
 
+
 class Building(models.Model):
     name = models.CharField(max_length=100, verbose_name='Название')
     description = models.TextField(blank=True, verbose_name='Описание')
@@ -118,10 +119,10 @@ class Connection(models.Model):
 
 class Tour(models.Model):
     name = models.CharField(max_length=150, verbose_name='Название')
-    image = models.ImageField(upload_to='tours/images/', verbose_name='Фото')
-    description = models.TextField(max_length=255, verbose_name='Описание')
-    full_description = models.TextField(verbose_name='Полное описание')
-    residents = models.ForeignKey(Resident, on_delete=models.CASCADE, related_name='tours', verbose_name='Резидент')
+    image = models.ImageField(null=True, blank=True, upload_to='tours/images/', verbose_name='Фото')
+    description = models.TextField(null=True, blank=True, max_length=255, verbose_name='Описание')
+    full_description = models.TextField(null=True, blank=True, verbose_name='Полное описание')
+    residents = models.ManyToManyField(Resident, related_name='tours', verbose_name='Резиденты')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
 
     class Meta:
@@ -130,6 +131,3 @@ class Tour(models.Model):
 
     def __str__(self):
         return self.name
-
-
-

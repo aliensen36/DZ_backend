@@ -1,11 +1,9 @@
 from django.contrib import admin
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.html import format_html
 from .models import Building, Floor, Location, Connection, Route, LocationCorner, LocationType, Tour
-from django.utils.safestring import mark_safe
 from django import forms
+from django.utils.html import mark_safe
 
 
 class FloorInline(admin.TabularInline):
@@ -100,6 +98,23 @@ class FloorAdmin(admin.ModelAdmin):
 
 @admin.register(Tour)
 class TourAdmin(admin.ModelAdmin):
-    list_display = ('name', 'residents', 'created_at')
-    list_display_links = ('name', 'residents', 'created_at')
-    search_fields = ('name', 'residents')
+    list_display = ('name', 'created_at')
+    list_display_links = ('name', 'created_at')
+    search_fields = ('name', 'residents__name')
+    list_filter = ('residents',)
+    filter_horizontal = ('residents',)
+    readonly_fields = ('image_preview', 'created_at')
+
+    fieldsets = (
+        (None, {
+            'fields': ('name', 'image', 'image_preview', 'description', 'full_description', 'residents', 'created_at')
+        }),
+    )
+
+    def image_preview(self, obj):
+        if obj.image:
+            return mark_safe(
+                f'<img src="{obj.image.url}" width="200" style="object-fit: cover; border-radius: 8px;" />')
+        return 'Нет изображения'
+
+    image_preview.short_description = 'Превью изображения'
