@@ -86,7 +86,15 @@ def send_promotion_notification(sender, instance, created, **kwargs):
     if not getattr(instance, '_original_is_approved', False) and instance.is_approved:
         logger.info(f"Promotion {instance.id} was just approved — sending notifications")
 
-        resident_categories = instance.resident.categories.filter(parent__isnull=True)
+        categories = instance.resident.categories.all()
+        resident_categories = set()
+
+        for category in categories:
+            if category.parent is None:
+                resident_categories.add(category)
+            else:
+                resident_categories.add(category.parent)
+
         if not resident_categories:
             logger.warning(f"No categories found for resident {instance.resident.id}")
             return
