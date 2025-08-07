@@ -1,19 +1,14 @@
-import re
-
-from django import forms
-from django.db import models
 from django.contrib import admin
 from django.contrib.admin.views.decorators import staff_member_required
-from django.core.exceptions import ValidationError
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.html import format_html
-from django.forms import Textarea
-from .models import LoyaltyCard, PointsTransaction, Promotion
-from avatar_app.models import UserAvatarProgress
 from django.contrib.auth import get_user_model
 
+from .models import LoyaltyCard, PointsTransaction, Promotion, PointsSystemSettings, UserPromotion
+from .forms import LoyaltyCardForm, PointsTransactionForm, PromotionAdminForm, PointsSystemSettingsAdminForm
 from .views import LoyaltyCardViewSet
+from avatar_app.models import UserAvatarProgress
 
 User = get_user_model()
 
@@ -27,31 +22,6 @@ def admin_card_image_view(request, card_id):
         return HttpResponse(image.getvalue(), content_type='image/png')
     except LoyaltyCard.DoesNotExist:
         return HttpResponse("Карта не найдена", status=404)
-
-
-class LoyaltyCardForm(forms.ModelForm):
-    user_first_name = forms.CharField(max_length=255, required=False, label="Имя")
-    user_last_name = forms.CharField(max_length=255, required=False, label="Фамилия")
-
-    class Meta:
-        model = LoyaltyCard
-        fields = '__all__'
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.instance and hasattr(self.instance, 'user') and self.instance.user:
-            self.fields['user_first_name'].initial = getattr(self.instance.user, 'user_first_name', '')
-            self.fields['user_last_name'].initial = getattr(self.instance.user, 'user_last_name', '')
-
-    def save(self, commit=True):
-        loyalty_card = super().save(commit=False)
-        if loyalty_card.user:
-            setattr(loyalty_card.user, 'user_first_name', self.cleaned_data.get('user_first_name'))
-            setattr(loyalty_card.user, 'user_last_name', self.cleaned_data.get('user_last_name'))
-            if commit:
-                loyalty_card.user.save()
-                loyalty_card.save()
-        return loyalty_card
 
 
 @admin.register(LoyaltyCard)
@@ -136,53 +106,6 @@ class LoyaltyCardAdmin(admin.ModelAdmin):
         return custom_urls + urls
 
 
-class PointsTransactionForm(forms.ModelForm):
-    class Meta:
-        model = PointsTransaction
-        fields = ['price', 'transaction_type', 'card_id', 'resident_id']
-
-    def clean(self):
-        cleaned_data = super().clean()
-        price = cleaned_data.get('price')
-        transaction_type = cleaned_data.get('transaction_type')
-        card = cleaned_data.get('card_id')
-        resident = cleaned_data.get('resident_id')
-
-        if price is not None and price <= 0:
-            raise ValidationError({'price': 'Сумма должна быть положительной.'})
-
-        if transaction_type == 'начисление':
-            if not resident:
-                raise ValidationError({'resident_id': 'Нужно выбрать резидента для расчета баллов.'})
-            points = int((price / 100) * resident.points_per_100_rubles)
-            if points <= 0:
-                raise ValidationError({'price': 'Недостаточно суммы для начисления баллов.'})
-            cleaned_data['points'] = points
-
-        elif transaction_type == 'списание':
-            if not resident:
-                raise ValidationError({'resident_id': 'Нужно выбрать резидента для расчета лимита списания.'})
-            if not card:
-                raise ValidationError({'card_id': 'Нужно выбрать карту.'})
-
-            max_percent = resident.max_deduct_percent / 100
-            max_deductible_points = int(price * max_percent)
-            current_balance = card.get_balance()
-
-            if max_deductible_points <= 0:
-                raise ValidationError({'price': 'Недостаточная сумма для списания баллов.'})
-            if current_balance < max_deductible_points:
-                raise ValidationError({
-                    'card_id': f'Недостаточно баллов. Баланс: {current_balance}, требуется: {max_deductible_points}'
-                })
-            cleaned_data['points'] = -max_deductible_points
-        else:
-            raise ValidationError({'transaction_type': 'Недопустимый тип транзакции.'})
-
-        return cleaned_data
-
-
-
 @admin.register(PointsTransaction)
 class PointsTransactionAdmin(admin.ModelAdmin):
     form = PointsTransactionForm
@@ -231,27 +154,29 @@ class PointsTransactionAdmin(admin.ModelAdmin):
             progress.check_for_upgrade()
 
 
-class PromotionAdminForm(forms.ModelForm):
-    class Meta:
-        model = Promotion
-        fields = '__all__'
+@admin.register(PointsSystemSettings)
+class PointsSystemSettingsAdmin(admin.ModelAdmin):
+    form = PointsSystemSettingsAdminForm
+    
+    list_display = ('points_per_100_rubles', 'points_per_1_percent')
+    list_display_links = ('points_per_100_rubles', 'points_per_1_percent')
+    list_filter = ('points_per_100_rubles', 'points_per_1_percent')
+    search_fields = ('points_per_100_rubles', 'points_per_1_percent')
 
-    def clean_promotional_code(self):
-        code = self.cleaned_data.get('promotional_code')
+    def has_add_permission(self, request):
+        '''Разрешить добавление только если записи нет'''
+        return not PointsSystemSettings.objects.exists()
 
-        if not re.match(r'^[A-Z0-9]+$', code) or not re.search(r'\d', code):
-            raise ValidationError(
-                "Промокод должен содержать только заглавные латинские буквы и хотя бы одну цифру."
-            )
+    def has_delete_permission(self, request, obj=None):
+        '''Запретить удаление'''
+        return False
 
-        # Проверка уникальности
-        qs = Promotion.objects.filter(promotional_code=code)
-        if self.instance.pk:
-            qs = qs.exclude(pk=self.instance.pk)
-        if qs.exists():
-            raise ValidationError("Такой промокод уже существует.")
-
-        return code
+    def changelist_view(self, request, extra_context=None):
+        '''Если запись существует — редирект на редактирование'''
+        obj = PointsSystemSettings.objects.first()
+        if obj:
+            return HttpResponseRedirect(reverse('admin:loyalty_app_pointssystemsettings_change', args=(obj.id,)))
+        return super().changelist_view(request, extra_context)
 
 
 @admin.register(Promotion)
@@ -263,7 +188,7 @@ class PromotionAdmin(admin.ModelAdmin):
         'resident',
         'start_date',
         'end_date',
-        'discount_percent',
+        'percent_equals_points_display',
         'is_approved',
     )
     list_filter = ('is_approved', 'discount_percent', 'start_date', 'end_date')
@@ -279,7 +204,7 @@ class PromotionAdmin(admin.ModelAdmin):
             'fields': ('start_date', 'end_date')
         }),
         ('Условия участия', {
-            'fields': ('discount_percent', 'url', 'promotional_code')
+            'fields': ('discount_percent', 'promotional_code')
         }),
         ('Привязка и статус', {
             'fields': ('resident', 'is_approved')
@@ -289,11 +214,20 @@ class PromotionAdmin(admin.ModelAdmin):
         }),
     )
 
-    def discount_or_bonus_display(self, obj):
-        return f'{obj.discount_percent}%'
-    discount_or_bonus_display.short_description = 'Скидка'
+    def percent_equals_points_display(self, obj):
+        return obj.percent_equals_points()
+    percent_equals_points_display.short_description = 'Скидка = Бонусы'
 
     def photo_preview(self, obj):
         if obj and obj.photo:
             return format_html('<img src="{}" style="max-height: 200px;"/>', obj.photo.url)
         return "Нет фото"
+
+
+@admin.register(UserPromotion)
+class UserPromotionAdmin(admin.ModelAdmin):
+    list_display = ('user', 'promotion', 'redeemed_at')
+    list_display_links =  ('user', 'promotion', 'redeemed_at')
+    list_filter =  ('user', 'promotion', 'redeemed_at')
+    search_fields =  ('user', 'promotion', 'redeemed_at')
+    readonly_fields = ('redeemed_at',)

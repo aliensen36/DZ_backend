@@ -1,10 +1,9 @@
 from django.db import models
 
-
-
 class Category(models.Model):
     name = models.CharField(max_length=255, null=False, verbose_name='Наименование категории')
     description = models.TextField(null=True, blank=True, verbose_name='Описание категории')
+    parent = models.ForeignKey('self', related_name='children', on_delete=models.CASCADE, null=True, blank=True, verbose_name='Родитель подкатегории')
 
     def __str__(self):
         return self.name
@@ -12,7 +11,6 @@ class Category(models.Model):
     class Meta:
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
-
 
 class Resident(models.Model):
     name = models.CharField(max_length=255, unique=True, verbose_name='Наименование')
@@ -29,8 +27,7 @@ class Resident(models.Model):
     office = models.IntegerField(unique=True, verbose_name='Офис/Помещение')
     photo = models.ImageField(upload_to='residents/photos/', null=True, blank=True, verbose_name='Фото')
     pin_code = models.CharField(max_length=6, unique=True, verbose_name='Пин-код')
-    points_per_100_rubles = models.PositiveIntegerField(null=True, blank=True, verbose_name='Кол-во баллов за 100 р.')
-    max_deduct_percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name='Максимальный процент списания от суммы покупки')
+    
     categories = models.ManyToManyField(Category, related_name='residents', verbose_name='Категории')
 
     def __str__(self):

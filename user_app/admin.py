@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+
 from .models import Referral, ReferralSettings
 
 User = get_user_model()
@@ -43,6 +44,7 @@ class ReferralAdmin(admin.ModelAdmin):
     search_fields = ('inviter__username', 'invitee__username', 'referral_code')
     fields = ('inviter', 'invitee', 'referral_code', 'is_rewarded', 'created_at')
     readonly_fields = ('created_at',)
+
 
 @admin.register(ReferralSettings)
 class ReferralSettingsAdmin(admin.ModelAdmin):

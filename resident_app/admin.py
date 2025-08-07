@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import *
+
+from .models import MapMarker, Category, Resident
 from mailing_app.models import Subscription
 
 class MapMarkerInline(admin.StackedInline):
@@ -14,8 +15,8 @@ class MapMarkerInline(admin.StackedInline):
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-    search_fields = ('name', 'description')
+    list_display = ('name', 'parent')
+    search_fields = ('name', 'description', 'parent')
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
@@ -48,8 +49,6 @@ class ResidentAdmin(admin.ModelAdmin):
                     'categories',
                     'description',
                     'info',
-                    'points_per_100_rubles',
-                    'max_deduct_percent'
                 )
             }),
             ('Контактные данные', {

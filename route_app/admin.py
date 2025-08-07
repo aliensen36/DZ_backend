@@ -56,7 +56,6 @@ class LocationTypeAdmin(admin.ModelAdmin):
     color_preview.short_description = 'Цвет'
 
 
-
 @admin.register(Location)
 class LocationAdmin(admin.ModelAdmin):
     list_display = ('name', 'floor', 'location_type')

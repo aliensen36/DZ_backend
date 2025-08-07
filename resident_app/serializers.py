@@ -1,13 +1,20 @@
 import re
 from rest_framework import serializers
-
 from .models import Category, Resident, MapMarker
 
 
+class RecursiveCategorySerializer(serializers.Serializer):
+    def to_representation(self, value):
+        serializer = self.parent.parent.__class__(value, context=self.context)
+        return serializer.data
+
+
 class CategorySerializer(serializers.ModelSerializer):
+    children = RecursiveCategorySerializer(many=True, read_only=True)
     class Meta:
         model = Category
-        fields = ['id', 'name', 'description']
+        fields = ['id', 'name', 'description', 'parent', 'children']
+
 
 class ResidentSerializer(serializers.ModelSerializer):
     categories = CategorySerializer(many=True, read_only=True)
