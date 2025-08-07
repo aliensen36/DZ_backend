@@ -1,16 +1,20 @@
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiExample, extend_schema_view
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework.viewsets import ModelViewSet
+
+from user_app.auth.permissions import IsBotAuthenticated
 from .navigation import find_shortest_path
 from rest_framework import viewsets, status
 from .models import (
     Building, Floor, LocationType, Location,
-    LocationCorner, Connection, Route
+    LocationCorner, Connection, Route, Tour
 )
 from .serializers import (
     BuildingSerializer, FloorSerializer, LocationTypeSerializer,
     LocationSerializer, LocationCornerSerializer, ConnectionSerializer,
-    RouteSerializer
+    RouteSerializer, TourSerializer
 )
 
 
@@ -76,3 +80,45 @@ class RouteViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="Получить список туров",
+        description="Возвращает список всех туров, отсортированных по дате создания (сначала новые)."
+    ),
+    retrieve=extend_schema(
+        summary="Получить тур по ID",
+        description="Возвращает детальную информацию о туре по его ID."
+    ),
+    create=extend_schema(
+        summary="Создать тур",
+        description="Создает новый тур. Требуется авторизация.",
+        examples=[
+            OpenApiExample(
+                'Пример создания',
+                value={
+                    "name": "Тур по Петербургу",
+                    "image": None,
+                    "description": "Краткое описание",
+                    "full_description": "Полное описание",
+                    "residents": 1
+                }
+            )
+        ]
+    ),
+    update=extend_schema(
+        summary="Обновить тур (PUT)",
+        description="Полностью обновляет данные тура. Требуется авторизация."
+    ),
+    partial_update=extend_schema(
+        summary="Частично обновить тур (PATCH)",
+        description="Изменяет часть данных тура. Требуется авторизация."
+    ),
+    destroy=extend_schema(
+        summary="Удалить тур",
+        description="Удаляет тур по ID. Требуется авторизация."
+    ),
+)
+class TourViewSet(ModelViewSet):
+    queryset = Tour.objects.all().order_by('-created_at')
+    serializer_class = TourSerializer
+    permission_classes = [IsBotAuthenticated | IsAuthenticated]

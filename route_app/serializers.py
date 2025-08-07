@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import (
     Building, Floor, LocationType, Location,
-    LocationCorner, Connection, Route
+    LocationCorner, Connection, Route, Tour
 )
 
 
@@ -107,3 +107,9 @@ class RouteSerializer(serializers.ModelSerializer):
             'start_location', 'start_location_id',
             'end_location', 'end_location_id'
         ]
+
+
+class TourSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tour
+        fields = '__all__'

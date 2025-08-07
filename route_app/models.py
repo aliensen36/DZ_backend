@@ -97,13 +97,6 @@ class Route(models.Model):
     def __str__(self):
         return self.name
 
-class Route_gastro(models.Model):
-
-    name = models.CharField(max_length=100, verbose_name='Название')
-    image = models.ImageField(upload_to='routes/images/', verbose_name='Фото')
-    description = models.models.TextField(max_length=255, verbose_name='Описание')
-    fullDescription = models.CharField(verbose_name='Полное описание')
-    residents = models.ForeignKey(Resident, on_delete=models.CASCADE, related_name='routes', verbose_name='Резидент')
 
 class Connection(models.Model):
     from_location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='connections_from',
@@ -121,4 +114,22 @@ class Connection(models.Model):
 
     def __str__(self):
         return f'Связь от {self.from_location.name} к {self.to_location.name}'
+
+
+class Tour(models.Model):
+    name = models.CharField(max_length=150, verbose_name='Название')
+    image = models.ImageField(upload_to='tours/images/', verbose_name='Фото')
+    description = models.TextField(max_length=255, verbose_name='Описание')
+    full_description = models.TextField(verbose_name='Полное описание')
+    residents = models.ForeignKey(Resident, on_delete=models.CASCADE, related_name='tours', verbose_name='Резидент')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+
+    class Meta:
+        verbose_name = 'Тур'
+        verbose_name_plural = 'Туры'
+
+    def __str__(self):
+        return self.name
+
+
 

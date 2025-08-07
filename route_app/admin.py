@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.html import format_html
-from .models import Building, Floor, Location, Connection, Route, LocationCorner, LocationType
+from .models import Building, Floor, Location, Connection, Route, LocationCorner, LocationType, Tour
 from django.utils.safestring import mark_safe
 from django import forms
 
@@ -97,3 +97,10 @@ class FloorAdmin(admin.ModelAdmin):
         return format_html('<a href="{}" target="_blank">Открыть превью плана</a>', url)
 
     plan_link.short_description = 'Превью плана'
+
+
+@admin.register(Tour)
+class TourAdmin(admin.ModelAdmin):
+    list_display = ('name', 'residents', 'created_at')
+    list_display_links = ('name', 'residents', 'created_at')
+    search_fields = ('name', 'residents')

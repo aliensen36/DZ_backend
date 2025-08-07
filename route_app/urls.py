@@ -12,6 +12,7 @@ route_app_router.register(r'location-types', LocationTypeViewSet, basename='loca
 route_app_router.register(r'location-corners', LocationCornerViewSet, basename='location-corner')
 route_app_router.register(r'connections', ConnectionViewSet, basename='connection')
 route_app_router.register(r'routes', RouteViewSet, basename='route')
+route_app_router.register(r'tours', TourViewSet, basename='tour')
 
 
 urlpatterns = [
