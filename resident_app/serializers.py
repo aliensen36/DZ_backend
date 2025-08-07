@@ -1,6 +1,5 @@
 import re
 from rest_framework import serializers
-
 from .models import Category, Resident, MapMarker
 
 

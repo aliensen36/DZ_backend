@@ -10,6 +10,12 @@ from user_app.auth.permissions import IsAdmin, IsBotAuthenticated
 from drf_spectacular.utils import (
     extend_schema, extend_schema_view, OpenApiParameter, OpenApiTypes
 )
+from django.http import Http404
+from django.db import transaction
+
+import logging
+logger = logging.getLogger(__name__)
+
 
 
 def get_descendants_ids(category):
@@ -49,6 +55,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [IsBotAuthenticated | IsAuthenticated]
+    lookup_field = 'id'
 
     def get_queryset(self):
         show_all = self.request.query_params.get('tree') == 'true'
@@ -56,16 +63,31 @@ class CategoryViewSet(viewsets.ModelViewSet):
             return Category.objects.all().prefetch_related('children')
         return Category.objects.filter(parent__isnull=True).prefetch_related('children')
 
+    def get_object(self):
+        # Ищем категорию без фильтрации по parent
+        queryset = Category.objects.all()
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        category = serializer.save()
-        Subscription.objects.create(
-            name=category.name,
-            description=category.description
-        )
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        try:
+            return queryset.get(pk=self.kwargs[lookup_url_kwarg])
+        except Category.DoesNotExist:
+            raise Http404("Категория не найдена")
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            descendants = get_descendants_ids(instance)
+
+            # Удаляем в транзакции
+            with transaction.atomic():
+                Category.objects.filter(id__in=descendants).delete()
+
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Http404:
+            return Response(
+                {"error": "Категория не найдена"},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
 
 @extend_schema_view(
