@@ -12,14 +12,17 @@ logger = logging.getLogger(__name__)
 
 @receiver(post_save, sender=Event)
 def send_event_notification(sender, instance, created, **kwargs):
-    if not created:
-        return
-
     try:
         subscription = Subscription.objects.get(name__iexact='Мероприятия')
         users = subscription.users.filter(enable_notifications=True)
 
+        if created:
+            intro = "🎉 Новое мероприятие!"
+        else:
+            intro = "🔄 Обновление мероприятия!"
+
         text = (
+             f"{intro}\n\n"
             f"🎉 **{instance.title}**\n"
             f"{instance.description}\n\n"
             f"📆 {instance.start_date.strftime('%d.%m.%Y %H:%M')}-{instance.end_date.strftime('%d.%m.%Y %H:%M')}\n\n"
