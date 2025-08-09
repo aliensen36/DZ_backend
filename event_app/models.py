@@ -5,9 +5,9 @@ from django.db import models
 
 class Event(models.Model):
     """Модель для представления мероприятий."""
-    title = models.CharField(max_length=100, unique=True, verbose_name='Название')
+    title = models.CharField(max_length=50, unique=True, verbose_name='Название')
     description = models.TextField(max_length=100, verbose_name='Описание')
-    info = models.TextField(max_length=400, verbose_name='Дополнительная информация')
+    info = models.TextField(max_length=450, verbose_name='Дополнительная информация')
     start_date = models.DateTimeField(verbose_name='Дата начала')
     end_date = models.DateTimeField(verbose_name='Дата окончания')
     location = models.CharField(max_length=100, verbose_name='Место проведения')

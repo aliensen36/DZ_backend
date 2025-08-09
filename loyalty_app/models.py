@@ -74,8 +74,8 @@ class PointsSystemSettings(models.Model):
     
 
 class Promotion(models.Model):
-    title = models.CharField(max_length=100, verbose_name='Название акции')
-    description = models.TextField(max_length=700, verbose_name='Описание акции')
+    title = models.CharField(max_length=50, verbose_name='Название акции')
+    description = models.TextField(max_length=750, verbose_name='Описание акции')
     start_date = models.DateTimeField(verbose_name='Дата начала акции')
     end_date = models.DateTimeField(verbose_name='Дата окончания акции')
     photo = models.ImageField(upload_to='promotions/photos/', verbose_name='Фото акции')
