@@ -46,21 +46,24 @@ class PointsTransactionForm(forms.ModelForm):
         if price is not None and price <= 0:
             raise ValidationError({'price': 'Сумма должна быть положительной.'})
 
+        settings = PointsSystemSettings.objects.first()
+        if not settings:
+            raise ValidationError('Не заданы настройки программы лояльности.')
+
         if transaction_type == 'начисление':
             if not resident:
                 raise ValidationError({'resident_id': 'Нужно выбрать резидента для расчета баллов.'})
-            points = int((price / 100) * resident.points_per_100_rubles)
+
+            points = int((price / 100) * settings.points_per_100_rubles)
             if points <= 0:
                 raise ValidationError({'price': 'Недостаточно суммы для начисления баллов.'})
             cleaned_data['points'] = points
 
         elif transaction_type == 'списание':
-            if not resident:
-                raise ValidationError({'resident_id': 'Нужно выбрать резидента для расчета лимита списания.'})
             if not card:
                 raise ValidationError({'card_id': 'Нужно выбрать карту.'})
 
-            max_percent = resident.max_deduct_percent / 100
+            max_percent = settings.points_per_1_percent / 100
             max_deductible_points = int(price * max_percent)
             current_balance = card.get_balance()
 
@@ -71,11 +74,11 @@ class PointsTransactionForm(forms.ModelForm):
                     'card_id': f'Недостаточно баллов. Баланс: {current_balance}, требуется: {max_deductible_points}'
                 })
             cleaned_data['points'] = -max_deductible_points
+
         else:
             raise ValidationError({'transaction_type': 'Недопустимый тип транзакции.'})
 
         return cleaned_data
-
 
 
 class PromotionAdminForm(forms.ModelForm):
