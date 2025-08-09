@@ -116,14 +116,8 @@ def send_promotion_notification(sender, instance, created, **kwargs):
                 f"{instance.start_date.strftime('%d.%m.%Y %H:%M')} - {instance.end_date.strftime('%d.%m.%Y %H:%M')}\n\n"
                 f"{instance.discount_percent}%"
                 f"{instance.preview()}\n\n"
+                f"<a href='https://t.me/DZavodBot?startapp=promo_{instance.id}'>Читать дальше</a>"
             )
-
-            buttons = [[
-                {
-                    "text": "Перейти к акции",
-                    "web_app": {"url": f"{FRONTEND_BASE_URL}/miniapp/promotions/{instance.id}"}
-                }
-            ]]
 
             for user in users:
                 logger.debug(f"Sending promotion {instance.id} to user {user.tg_id}")
@@ -131,7 +125,6 @@ def send_promotion_notification(sender, instance, created, **kwargs):
                 Mailing.objects.create(
                     text=text,
                     image=instance.photo,
-                    button_url=f"{FRONTEND_BASE_URL}/miniapp/promotions/{instance.id}",
                     type='text',
                     tg_user_id=user.tg_id
                 )
@@ -139,7 +132,6 @@ def send_promotion_notification(sender, instance, created, **kwargs):
                 success = send_telegram_message(
                     user_id=user.tg_id,
                     text=text,
-                    buttons=buttons,
                     image=instance.photo
                 )
 

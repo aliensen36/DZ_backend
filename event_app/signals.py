@@ -22,13 +22,13 @@ def send_event_notification(sender, instance, created, **kwargs):
             intro = "🔄 Обновление мероприятия!"
 
         text = (
-             f"{intro}\n\n"
-            f"🎉 **{instance.title}**\n"
+            f"{intro}\n\n"
+            f"<b>{instance.title}</b>\n"
             f"{instance.description}\n\n"
-            f"📆 {instance.start_date.strftime('%d.%m.%Y %H:%M')}-{instance.end_date.strftime('%d.%m.%Y %H:%M')}\n\n"
-            f"📍 {instance.location}\n"
+            f"{instance.start_date.strftime('%d.%m.%Y %H:%M')}-{instance.end_date.strftime('%d.%m.%Y %H:%M')}\n\n"
+            f"{instance.location}\n"
             f"{instance.preview()}\n\n"
-             f"<a href='https://t.me/DZavodBot?startapp=events_{instance.id}'>Читать дальше</a>"
+            f"<a href='https://t.me/DZavodBot?startapp=events_{instance.id}'>Читать дальше</a>"
         )
 
         for user in users:
