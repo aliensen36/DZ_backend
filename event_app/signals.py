@@ -28,23 +28,14 @@ def send_event_notification(sender, instance, created, **kwargs):
             f"📆 {instance.start_date.strftime('%d.%m.%Y %H:%M')}-{instance.end_date.strftime('%d.%m.%Y %H:%M')}\n\n"
             f"📍 {instance.location}\n"
             f"{instance.preview()}\n\n"
+             f"<a href='https://t.me/DZavodBot?startapp=events_{instance.id}'>Читать дальше</a>"
         )
-
-        buttons = [
-            [
-                {
-                    "text": "Перейти к мероприятию",
-                    "web_app": {"url": f"{FRONTEND_BASE_URL}/miniapp/events/{instance.id}"}
-                }
-            ]
-        ]
 
         for user in users:
             # Создаём запись в Mailing
             Mailing.objects.create(
                 text=text,
                 image=instance.photo,
-                button_url=f"{FRONTEND_BASE_URL}/miniapp/events/{instance.id}",
                 type='text',
                 tg_user_id=user.tg_id
             )
@@ -53,7 +44,6 @@ def send_event_notification(sender, instance, created, **kwargs):
             success = send_telegram_message(
                 user_id=user.tg_id,
                 text=text,
-                buttons=buttons,
                 image=instance.photo
             )
             if success:

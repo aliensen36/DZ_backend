@@ -27,9 +27,6 @@ def send_telegram_message(user_id, text, buttons=None, image=None):
     Returns:
         bool: True, если отправка успешна, False в случае ошибки.
     """
-    reply_markup = {}
-    if buttons:
-        reply_markup = {"inline_keyboard": buttons}
 
     response = None
     try:
@@ -39,7 +36,6 @@ def send_telegram_message(user_id, text, buttons=None, image=None):
                 "chat_id": str(user_id),
                 "caption": text,
                 "parse_mode": "HTML",
-                "reply_markup": json.dumps(reply_markup) if reply_markup else None
             }
             files = {'photo': open(image.path, 'rb')}
             logger.info(f"Отправка фото в Telegram: chat_id={user_id}, file={image.path}")
@@ -51,7 +47,6 @@ def send_telegram_message(user_id, text, buttons=None, image=None):
                 "chat_id": str(user_id),
                 "text": text,
                 "parse_mode": "HTML",
-                "reply_markup": json.dumps(reply_markup) if reply_markup else None
             }
             logger.info(f"Отправка текстового сообщения в Telegram: chat_id={user_id}, text={text}")
             response = requests.post(SEND_MESSAGE_URL, json=payload)
