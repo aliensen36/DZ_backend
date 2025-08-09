@@ -34,7 +34,7 @@ def send_event_notification(sender, instance, created, **kwargs):
             [
                 {
                     "text": "Перейти к мероприятию",
-                    "web_app": {"url": f"{FRONTEND_BASE_URL}/miniapp/events/{instance.id}"}
+                    "web_app": {"url": f"{FRONTEND_BASE_URL}/miniapp/api/events/{instance.id}"}
                 }
             ]
         ]
