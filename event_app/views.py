@@ -64,24 +64,24 @@ class EventViewSet(viewsets.ModelViewSet):
                 {"photo": ["Фото мероприятия обязательно."]},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        serializer = self.get_serializer(data=request.data, context={"request": request})
+        data = request.data.copy()
+        data["photo"] = request.FILES["photo"]
+        serializer = self.get_serializer(data=data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
-        instance.photo = request.FILES["photo"]
-        instance.save()
         logger.info(f"Event created successfully: {instance.title}")
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def partial_update(self, request, *args, **kwargs):
         logger.debug(f"Received partial update request for event {self.get_object().id} with data: {request.data}")
         instance = self.get_object()
+        data = request.data.copy()
+        if "photo" in request.FILES:
+            data["photo"] = request.FILES["photo"]
         serializer = self.get_serializer(
-            instance, data=request.data, partial=True, context={"request": request}
+            instance, data=data, partial=True, context={"request": request}
         )
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
-        if "photo" in request.FILES:
-            instance.photo = request.FILES["photo"]
-            instance.save()
         logger.info(f"Event {instance.id} updated successfully")
         return Response(serializer.data)

@@ -28,13 +28,13 @@ def send_promotion_to_admin(sender, instance, created, **kwargs):
             logger.debug(f"Пропуск уведомления для акции {instance.id}: нет изменений кроме is_approved")
             return
         
-        action = "создана" if created else "обновлена"
+        action = "Cоздана акция" if created else "Обновлена акция"
         text = (
-            f"<b>Акция {action}: {instance.title}</b>\n\n"
-            f"Описание: {instance.description}\n\n"
-            f"Период: {instance.start_date.strftime('%d.%m.%Y %H:%M')} - {instance.end_date.strftime('%d.%m.%Y %H:%M')}\n\n"
-            f"Скидка: {instance.discount_percent}%"
-            f"Промокод: {instance.promotional_code}"
+            f"<b>{action}: {instance.title}</b>\n\n"
+            f"{instance.description}\n\n"
+            f"{instance.start_date.strftime('%d.%m.%Y %H:%M')} - {instance.end_date.strftime('%d.%m.%Y %H:%M')}\n\n"
+            f"{instance.discount_percent}%"
+            f"{instance.promotional_code}"
             f"Статус: {'Подтверждена' if instance.is_approved else 'Ожидает подтверждения'}"
         )
 

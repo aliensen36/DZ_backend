@@ -23,7 +23,7 @@ def send_event_notification(sender, instance, created, **kwargs):
 
         text = (
              f"{intro}\n\n"
-            f"🎉 **{instance.title}**\n"
+            f"🎉 <b>{instance.title}</b>\n"
             f"{instance.description}\n\n"
             f"📆 {instance.start_date.strftime('%d.%m.%Y %H:%M')}-{instance.end_date.strftime('%d.%m.%Y %H:%M')}\n\n"
             f"📍 {instance.location}\n"
