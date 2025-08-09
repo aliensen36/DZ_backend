@@ -23,7 +23,7 @@ def send_event_notification(sender, instance, created, **kwargs):
 
         text = (
              f"{intro}\n\n"
-            f"🎉 <b>{instance.title}</b>\n"
+            f"🎉 **{instance.title}**\n"
             f"{instance.description}\n\n"
             f"📆 {instance.start_date.strftime('%d.%m.%Y %H:%M')}-{instance.end_date.strftime('%d.%m.%Y %H:%M')}\n\n"
             f"📍 {instance.location}\n"
@@ -34,7 +34,7 @@ def send_event_notification(sender, instance, created, **kwargs):
             [
                 {
                     "text": "Перейти к мероприятию",
-                    "web_app": {"url": f"{FRONTEND_BASE_URL}/miniapp/api/events/{instance.id}"}
+                    "web_app": {"url": f"https://t.me/DZavodBot?startapp=events_{instance.id}"}
                 }
             ]
         ]
@@ -44,7 +44,7 @@ def send_event_notification(sender, instance, created, **kwargs):
             Mailing.objects.create(
                 text=text,
                 image=instance.photo,
-                button_url=f"{FRONTEND_BASE_URL}/miniapp/api/events/{instance.id}",
+                button_url=f"https://t.me/DZavodBot?startapp=events_{instance.id}",
                 type='text',
                 tg_user_id=user.tg_id
             )
