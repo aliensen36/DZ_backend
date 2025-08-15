@@ -115,7 +115,7 @@ class UserAvatarProgressViewSet(viewsets.ReadOnlyModelViewSet):
         return Response({'detail': f"Аватар '{selected.avatar.name}' выбран как активный"})
     
 
-class AvatarShopViewSet(viewsets.ReadOnlyModelViewSet):
+class AvatarShopViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
     queryset = AvatarOutfit.objects.all()
 
