@@ -141,7 +141,7 @@ class AvatarShopViewSet(viewsets.ViewSet):
 
         return active_progress, avatar_stage
 
-    @action(detail=False, methods=['get'], url_path='outfits')
+    @action(detail=False, methods=['get'], url_path='all-outfits')
     def outfits_list(self, request):
         """
         Возвращает одежду (купленная и еще не купленная).
