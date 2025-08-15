@@ -3,7 +3,7 @@ from django.utils import timezone
 
 from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
 from .auth.permissions import IsAdmin, IsBotAuthenticated
@@ -125,7 +125,7 @@ class UserViewSet(
 
 
 class UserMeViewSet(viewsets.ViewSet):
-    permission_classes = [AllowAny] # Потом поменять на IsAuthenticated
+    permission_classes = [IsAuthenticated]
 
     @action(detail=False, methods=['get'], url_path='me')
     def me(self, request):

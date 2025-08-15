@@ -2,7 +2,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 from django.db.models import Prefetch
 
 from .models import Avatar, UserAvatarProgress, Stage, AvatarStage, AvatarOutfit, OutfitPurchase
@@ -11,8 +11,7 @@ from .serializers import AvatarSerializer, AvatarDetailSerializer, UserAvatarPro
 
 
 class AvatarViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [AllowAny]  # Потом заменить на IsAuthenticated
-
+    permission_classes = [IsAuthenticated]
     def get_serializer_class(self):
         if self.action == 'retrieve':
             return AvatarDetailSerializer
@@ -41,7 +40,7 @@ class AvatarViewSet(viewsets.ReadOnlyModelViewSet):
             )
         )
     
-    @action(detail=True, methods=['post'], permission_classes=[AllowAny])
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def choose(self, request, pk=None):
         """
         Выбор аватара пользователем. Создаёт UserAvatarProgress и делает его активным.
@@ -88,7 +87,7 @@ class AvatarViewSet(viewsets.ReadOnlyModelViewSet):
     
 
 class UserAvatarProgressViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = [AllowAny]  # Потом заменить на IsAuthenticated
+    permission_classes = [IsAuthenticated] 
     serializer_class = UserAvatarProgressSerializer
 
     def get_queryset(self):
