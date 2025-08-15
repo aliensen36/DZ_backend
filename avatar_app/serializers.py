@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Avatar, AvatarStage, UserAvatarProgress, Stage, AvatarOutfit
+from .models import Avatar, AvatarStage, UserAvatarProgress, Stage
 
 
 class StageSerializer(serializers.ModelSerializer):
@@ -74,7 +74,3 @@ class UserAvatarDetailSerializer(serializers.ModelSerializer):
             return next_stage.required_spending - obj.total_spending
         return None
     
-class AvatarOutfitSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AvatarOutfit
-        fields = '__all__'
