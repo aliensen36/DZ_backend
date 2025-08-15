@@ -7,11 +7,12 @@ from django.db.models import Prefetch
 
 from .models import Avatar, UserAvatarProgress, Stage, AvatarStage, AvatarOutfit, OutfitPurchase
 from loyalty_app.models import PointsTransaction
-from .serializers import AvatarSerializer, AvatarDetailSerializer, UserAvatarProgressSerializer
+from .serializers import AvatarSerializer, AvatarDetailSerializer, UserAvatarProgressSerializer, AvatarOutfitSerializer
 
 
 class AvatarViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
+
     def get_serializer_class(self):
         if self.action == 'retrieve':
             return AvatarDetailSerializer
@@ -117,6 +118,7 @@ class UserAvatarProgressViewSet(viewsets.ReadOnlyModelViewSet):
 class AvatarShopViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = AvatarOutfit.objects.all()
+    serializer_class = AvatarOutfitSerializer
 
     def get_active_avatar_and_stage(self, user):
         """
