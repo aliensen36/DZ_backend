@@ -116,6 +116,7 @@ class UserAvatarProgressViewSet(viewsets.ReadOnlyModelViewSet):
 
 class AvatarShopViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
+    queryset = AvatarOutfit.objects.all()
 
     def get_active_avatar_and_stage(self, user):
         """
