@@ -12,6 +12,7 @@ class Category(models.Model):
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
 
+
 class Resident(models.Model):
     name = models.CharField(max_length=255, unique=True, verbose_name='Наименование')
     description = models.TextField(null=True, blank=True, max_length=255, verbose_name='Описание')

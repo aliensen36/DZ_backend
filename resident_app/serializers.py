@@ -24,6 +24,15 @@ class ResidentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Resident
         fields = '__all__'
+        extra_kwargs = {
+            'pin_code': {'required': False}
+        }
+
+    def create(self, validated_data):
+        # Создаем экземпляр без pin_code, чтобы сработал метод save() модели
+        if 'pin_code' not in validated_data:
+            validated_data['pin_code'] = None
+        return super().create(validated_data)
 
     def validate_phone_number(self, value):
         phone_regex = re.compile(r"^\+?\d{10,15}$")
@@ -31,16 +40,6 @@ class ResidentSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Некорректный номер телефона: 10–15 цифр, можно с '+'. Пример: +79001234567"
             )
-        return value
-
-    def validate_floor(self, value):
-        if value < 1 or value > 5:
-            raise serializers.ValidationError("Этаж должен быть от 1 до 5.")
-        return value
-    
-    def validate_office(self, value):
-        if value < 1 or value > 66:
-            raise serializers.ValidationError("Офис должен быть от 1 до 66.")
         return value
 
     def validate(self, data):
