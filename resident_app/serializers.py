@@ -55,7 +55,7 @@ class ResidentSerializer(serializers.ModelSerializer):
                 qs = qs.exclude(pk=instance.pk)
             return qs.exists()
 
-        for field in ['name', 'email', 'phone_number', 'official_website', 'office']:
+        for field in ['name', 'email', 'phone_number', 'official_website']:
             if is_duplicate(field):
                 errors[field] = f"{field.capitalize()} уже используется другим резидентом."
 
