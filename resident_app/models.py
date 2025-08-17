@@ -24,8 +24,8 @@ class Resident(models.Model):
     address = models.CharField(max_length=255, verbose_name='Адрес', default='ул. Большая Новодмитровская, д. 36')
     building = models.CharField(max_length=10, verbose_name='Строение')
     entrance = models.CharField(max_length=10, verbose_name='Вход', null=True, blank=True)
-    floor = models.IntegerField(max_length=10, verbose_name='Этаж')
-    office = models.IntegerField(max_length=10, verbose_name='Офис/Помещение')
+    floor = models.CharField(max_length=10, verbose_name='Этаж')
+    office = models.CharField(max_length=10, verbose_name='Офис/Помещение')
     photo = models.ImageField(upload_to='residents/photos/', null=True, blank=True, verbose_name='Фото')
     pin_code = models.CharField(max_length=6, unique=True, verbose_name='Пин-код')
     
