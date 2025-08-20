@@ -1,4 +1,5 @@
 import datetime
+from datetime import timezone
 import re
 
 from rest_framework import serializers
@@ -19,8 +20,10 @@ class UserSerializer(serializers.ModelSerializer):
                     return datetime.strptime(value, '%Y-%m-%d').date()
                 except ValueError:
                     raise serializers.ValidationError("Дата рождения должна быть в формате ГГГГ-ММ-ДД")
-            elif isinstance(value, datetime.date):
+            elif isinstance(value, datetime.datetime):
                 value = value.date()
+            elif isinstance(value, datetime.date):
+                pass
             
             if value > datetime.date.today():
                 raise serializers.ValidationError("Дата рождения не может быть в будущем")

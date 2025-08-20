@@ -1,15 +1,38 @@
 import logging
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
-from .models import Promotion
+from .models import Promotion, LoyaltyCard, PointsSystemSettings, PointsTransaction
 from user_app.models import User
 from mailing_app.models import Subscription, Mailing
 from mailing_app.utils import send_telegram_message
-from dzavod.settings import FRONTEND_BASE_URL
 
 logger = logging.getLogger(__name__)
 
+@receiver(post_save, sender=LoyaltyCard)
+def accrue_new_user_points(sender, instance, created, **kwargs):
+    if not created:
+        logger.debug(f"LoyaltyCard {instance.id} already exists, skipping point accrual")
+        return
+    
+    settings = PointsSystemSettings.objects.first()
+    if not settings:
+        logger.error("PointsSystemSettings not found, cannot accrue points")
+        return
+    points = settings.new_user_points
+    if points <= 0:
+        logger.debug(f"No points to accrue for new user {instance.user.id}")
+        return
+
+    PointsTransaction.objects.create(
+        points=points,
+        price=0.0,
+        transaction_type='начисление',
+        card_id=instance,
+        resident_id = None,
+    )
+
 # Отправляет уведомление всем админам 
+@receiver(post_save, sender=Promotion)
 def send_promotion_to_admin(sender, instance, created, **kwargs):
     if kwargs.get('raw'):
         logger.debug(f"Raw signal for Promotion {instance.id}, skipping")
@@ -31,10 +54,10 @@ def send_promotion_to_admin(sender, instance, created, **kwargs):
         action = "Cоздана акция" if created else "Обновлена акция"
         text = (
             f"<b>{action}: {instance.title}</b>\n\n"
-            f"{instance.description}\n\n"
-            f"{instance.start_date.strftime('%d.%m.%Y %H:%M')} - {instance.end_date.strftime('%d.%m.%Y %H:%M')}\n\n"
-            f"{instance.discount_percent}%"
-            f"{instance.promotional_code}"
+            f"{instance.description}\n"
+            f"{instance.start_date.strftime('%d.%m.%Y %H:%M')} - {instance.end_date.strftime('%d.%m.%Y %H:%M')}\n"
+            f"{instance.discount_percent}%\n"
+            f"{instance.promotional_code}\n"
             f"Статус: {'Подтверждена' if instance.is_approved else 'Ожидает подтверждения'}"
         )
 
@@ -113,8 +136,8 @@ def send_promotion_notification(sender, instance, created, **kwargs):
 
             text = (
                 f"<b>{instance.title}</b>\n\n"
-                f"{instance.start_date.strftime('%d.%m.%Y %H:%M')} - {instance.end_date.strftime('%d.%m.%Y %H:%M')}\n\n"
-                f"{instance.discount_percent}%"
+                f"{instance.start_date.strftime('%d.%m.%Y %H:%M')} - {instance.end_date.strftime('%d.%m.%Y %H:%M')}\n"
+                f"{instance.discount_percent}%\n"
                 f"{instance.preview()}\n\n"
                 f"<a href='https://t.me/DZavodBot?startapp=promo_{instance.id}'>Читать дальше</a>"
             )

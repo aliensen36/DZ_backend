@@ -158,10 +158,10 @@ class PointsTransactionAdmin(admin.ModelAdmin):
 class PointsSystemSettingsAdmin(admin.ModelAdmin):
     form = PointsSystemSettingsAdminForm
     
-    list_display = ('points_per_100_rubles', 'points_per_1_percent')
-    list_display_links = ('points_per_100_rubles', 'points_per_1_percent')
-    list_filter = ('points_per_100_rubles', 'points_per_1_percent')
-    search_fields = ('points_per_100_rubles', 'points_per_1_percent')
+    list_display = ('points_per_100_rubles', 'points_per_1_percent', 'new_user_points')
+    list_display_links = ('points_per_100_rubles', 'points_per_1_percent', 'new_user_points')
+    list_filter = ('points_per_100_rubles', 'points_per_1_percent', 'new_user_points')
+    search_fields = ('points_per_100_rubles', 'points_per_1_percent', 'new_user_points')
 
     def has_add_permission(self, request):
         '''Разрешить добавление только если записи нет'''

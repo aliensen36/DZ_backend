@@ -60,8 +60,9 @@ class PointsTransaction(models.Model):
     
 
 class PointsSystemSettings(models.Model):
-    points_per_100_rubles = models.PositiveIntegerField(verbose_name='Кол-во баллов за 100 р.')
-    points_per_1_percent = models.PositiveIntegerField(verbose_name='Кол-во баллов за 1%')
+    points_per_100_rubles = models.PositiveIntegerField(default=0, verbose_name='Кол-во баллов за 100 р.')
+    points_per_1_percent = models.PositiveIntegerField(default=0, verbose_name='Кол-во баллов за 1%')
+    new_user_points = models.PositiveIntegerField(default=0, verbose_name='Баллы за регистрацию')
 
     def save(self, *args, **kwargs):
         if not self.pk and PointsSystemSettings.objects.exists():

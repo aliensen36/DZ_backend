@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.urls import reverse
+from django.http import HttpResponseRedirect
 
 from .models import Referral, ReferralSettings
 
@@ -49,4 +51,21 @@ class ReferralAdmin(admin.ModelAdmin):
 @admin.register(ReferralSettings)
 class ReferralSettingsAdmin(admin.ModelAdmin):
     list_display = ('inviter_points', 'invitee_points')
+    list_display_links = ('inviter_points', 'invitee_points')
+    list_filter = ('inviter_points', 'invitee_points')
     search_fields = ('inviter_points', 'invitee_points')
+
+    def has_add_permission(self, request):
+        '''Разрешить добавление только если записи нет'''
+        return not ReferralSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        '''Запретить удаление'''
+        return False
+
+    def changelist_view(self, request, extra_context=None):
+        '''Если запись существует — редирект на редактирование'''
+        obj = ReferralSettings.objects.first()
+        if obj:
+            return HttpResponseRedirect(reverse('admin:user_app_referralsettings_change', args=(obj.id,)))
+        return super().changelist_view(request, extra_context)
