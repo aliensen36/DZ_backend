@@ -52,11 +52,11 @@ class PointsTransactionForm(forms.ModelForm):
 
         if transaction_type == 'начисление':
             if not resident:
-                raise ValidationError({'resident_id': 'Нужно выбрать резидента для расчета баллов.'})
+                raise ValidationError({'resident_id': 'Нужно выбрать резидента для расчета бонусов.'})
 
             points = int((price / 100) * settings.points_per_100_rubles)
             if points <= 0:
-                raise ValidationError({'price': 'Недостаточно суммы для начисления баллов.'})
+                raise ValidationError({'price': 'Недостаточно суммы для начисления бонусов.'})
             cleaned_data['points'] = points
 
         elif transaction_type == 'списание':
@@ -68,10 +68,10 @@ class PointsTransactionForm(forms.ModelForm):
             current_balance = card.get_balance()
 
             if max_deductible_points <= 0:
-                raise ValidationError({'price': 'Недостаточная сумма для списания баллов.'})
+                raise ValidationError({'price': 'Недостаточная сумма для списания бонусов.'})
             if current_balance < max_deductible_points:
                 raise ValidationError({
-                    'card_id': f'Недостаточно баллов. Баланс: {current_balance}, требуется: {max_deductible_points}'
+                    'card_id': f'Недостаточно бонусов. Баланс: {current_balance}, требуется: {max_deductible_points}'
                 })
             cleaned_data['points'] = -max_deductible_points
 

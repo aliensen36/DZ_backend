@@ -106,12 +106,12 @@ class Referral(models.Model):
 
 
 class ReferralSettings(models.Model):
-    inviter_points = models.PositiveIntegerField(default=0, verbose_name='Баллы для приглашающего')
-    invitee_points = models.PositiveIntegerField(default=0, verbose_name='Баллы для приглашаемого')
+    inviter_points = models.PositiveIntegerField(default=0, verbose_name='Бонусы для приглашающего')
+    invitee_points = models.PositiveIntegerField(default=0, verbose_name='Бонусы для приглашаемого')
 
     def __str__(self):
-        return f"Баллы для рефералов: {self.inviter_points} для приглашающего, {self.invitee_points} для приглашаемого"
+        return f"Бонусы для рефералов: {self.inviter_points} для приглашающего, {self.invitee_points} для приглашаемого"
     
     class Meta:
-        verbose_name = 'Настройки реферальных баллов'
-        verbose_name_plural = 'Настройки реферальных баллов'
+        verbose_name = 'Настройки реферальных бонусов'
+        verbose_name_plural = 'Настройки реферальных бонусов'

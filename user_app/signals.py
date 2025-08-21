@@ -31,7 +31,7 @@ def handle_referral_and_points(sender, instance, created, **kwargs):
             if referral.is_rewarded:
                 return
 
-            # Начисляем баллы пригласившему, если у него есть карта лояльности
+            # Начисляем бонусы пригласившему, если у него есть карта лояльности
             if inviter.loyalty_card:
                 PointsTransaction.objects.create(
                     points=referral_settings.inviter_points,
@@ -44,12 +44,12 @@ def handle_referral_and_points(sender, instance, created, **kwargs):
                 send_telegram_message(
                     user_id=inviter.tg_id,
                     text=(
-                        f"Ты получил(а) {referral_settings.inviter_points} баллов за то, "
+                        f"Ты получил(а) {referral_settings.inviter_points} бонусов за то, "
                         f"что привёл(а) к нам друга — {'@'+instance.username}!"
                     )
                 )
 
-            # Начисляем баллы приглашенному, если у него есть карта лояльности
+            # Начисляем бонусы приглашенному, если у него есть карта лояльности
             if loyalty_card:
                 PointsTransaction.objects.create(
                     points=referral_settings.invitee_points,
@@ -62,7 +62,7 @@ def handle_referral_and_points(sender, instance, created, **kwargs):
                 send_telegram_message(
                     user_id=instance.tg_id,
                     text=(
-                        f"Ты получил(а) {referral_settings.invitee_points} баллов "
+                        f"Ты получил(а) {referral_settings.invitee_points} бонусов "
                         f"за регистрацию по ссылке друга!"
                     )
                 )
@@ -72,6 +72,6 @@ def handle_referral_and_points(sender, instance, created, **kwargs):
             referral.save() 
 
             logger.info(
-                f"Реферальные баллы начислены: {inviter.tg_id} (+{referral_settings.inviter_points}), "
+                f"Реферальные бонусы начислены: {inviter.tg_id} (+{referral_settings.inviter_points}), "
                 f"{instance.tg_id} (+{referral_settings.invitee_points})"
             )

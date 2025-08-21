@@ -31,10 +31,10 @@ class PointsTransactionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Сумма должна быть положительной")
 
         if transaction_type == 'начисление' and points<=0:
-            raise serializers.ValidationError("При начисдении баллов число не может быть отрицательным.")
+            raise serializers.ValidationError("При начисдении бонусов число не может быть отрицательным.")
         
         if transaction_type == 'списание' and points>=0:
-            raise serializers.ValidationError("При списании баллов число не может быть положительным.")
+            raise serializers.ValidationError("При списании бонусов число не может быть положительным.")
         
         return data
     

@@ -91,7 +91,7 @@ class LoyaltyCardViewSet(viewsets.ViewSet):
         base_y += name_height + line_spacing
 
         balance_prefix = "Баланс: "
-        balance_suffix = " баллов"
+        balance_suffix = " бонусов"
         x_pos = 50
         draw.text((x_pos, base_y), balance_prefix, font=font_medium, fill=(0, 0, 0))
         prefix_width = draw.textbbox((0, 0), balance_prefix, font=font_medium)[2]
@@ -234,17 +234,17 @@ class PointsTransactionResidenrViewSet(viewsets.ModelViewSet):
         return Response({"detail": "Этот эндпоинт отключен."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     @extend_schema(
-        description="Метод для начисления баллов по сумме.",
+        description="Метод для начисления бонусов по сумме.",
         request=PointsTransactionSerializer,
         responses={
             201: OpenApiResponse(description="Транзакция успешно создана", response=PointsTransactionSerializer),
-            400: OpenApiResponse(description="Ошибка при начислении баллов")
+            400: OpenApiResponse(description="Ошибка при начислении бонусов")
         },
         parameters=[
             OpenApiParameter(
                 name="price",  
                 type=OpenApiTypes.NUMBER, 
-                description="Сумма для начисления баллов (в рублях)", 
+                description="Сумма для начисления бонусов (в рублях)", 
                 examples=[OpenApiExample(name="default", value=500)],
             ),
             OpenApiParameter(
@@ -295,7 +295,7 @@ class PointsTransactionResidenrViewSet(viewsets.ModelViewSet):
         points_to_accrue = round(int(price) * points_per_100_rub // 100)
 
         if points_to_accrue <= 0:
-            return Response({'error': 'Недостаточно суммы для начисления баллов'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Недостаточно суммы для начисления бонусов'}, status=status.HTTP_400_BAD_REQUEST)
 
         user = card.user
 
@@ -467,7 +467,7 @@ class PromotionViewSet(viewsets.ModelViewSet):
 
         if current_balance < points_to_deduct:
             return Response({
-                'error': f'Недостаточно баллов.\n'
+                'error': f'Недостаточно бонусов.\n'
                         f'Баланс: <b>{current_balance}</b>.\n'
                         f'требуется: <b>{points_to_deduct}</b>'
             }, status=status.HTTP_400_BAD_REQUEST)

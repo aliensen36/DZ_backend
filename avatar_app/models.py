@@ -101,7 +101,7 @@ class UserAvatarProgress(models.Model):
 class AvatarOutfit(models.Model):
     avatar_stage = models.ForeignKey(AvatarStage, on_delete=models.CASCADE, related_name='outfits', verbose_name='Стадия аватара')
     outfit = models.ImageField(upload_to='avatars/clothes/previews/', verbose_name='Картинка комплекта (только одежда)')
-    price = models.PositiveIntegerField(verbose_name='Цена (в баллах)')
+    price = models.PositiveIntegerField(verbose_name='Цена (в бонусах)')
     custom_img = models.ImageField(upload_to='avatars/clothes/avatar_images/', verbose_name='Картинка аватара в этой одежде')
     custom_animations = models.ManyToManyField('Animation', blank=True,verbose_name='Анимации аватара в одежде')
 
@@ -110,7 +110,7 @@ class AvatarOutfit(models.Model):
         verbose_name_plural = 'Одежда для аватаров'
 
     def __str__(self):
-        return f"Одежда #{self.id} для {self.avatar_stage} за {self.price} баллов"
+        return f"Одежда #{self.id} для {self.avatar_stage} за {self.price} бонусув"
     
 
 class OutfitPurchase(models.Model):

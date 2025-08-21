@@ -199,7 +199,7 @@ class AvatarOutfitsViewSet(viewsets.ViewSet):
 
         if balance < outfit.price:
             return Response({
-                'detail': f'Недостаточно баллов. Баланс: {balance}, требуется: {outfit.price}'
+                'detail': f'Недостаточно бонусов. Баланс: {balance}, требуется: {outfit.price}'
             }, status=400)
 
         PointsTransaction.objects.create(
@@ -213,7 +213,7 @@ class AvatarOutfitsViewSet(viewsets.ViewSet):
         purchase = OutfitPurchase.objects.create(user=user, outfit=outfit)
 
         return Response({
-            'detail': f'Успешная покупка аутфита #{purchase.outfit.id}. Списано: {outfit.price} баллов.'
+            'detail': f'Успешная покупка аутфита #{purchase.outfit.id}. Списано: {outfit.price} бонусов.'
         })
 
     @action(detail=True, methods=['post'], url_path='wear')

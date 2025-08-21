@@ -43,7 +43,7 @@ TRANSACTION_TYPE =[
 ]
 
 class PointsTransaction(models.Model):
-    points = models.IntegerField(null=False, verbose_name='Баллы')
+    points = models.IntegerField(null=False, verbose_name='Бонусы')
     price = models.FloatField(null=False, verbose_name='Сумма операции')
     transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPE, verbose_name='Тип транзакции')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата транзакции')
@@ -52,17 +52,17 @@ class PointsTransaction(models.Model):
     resident_id = models.ForeignKey(Resident, on_delete=models.CASCADE, related_name='transactions', verbose_name='Резидент', null=True, blank=True)
 
     class Meta:
-        verbose_name = 'Транзакция баллов'
-        verbose_name_plural = 'Транзакции баллов'
+        verbose_name = 'Транзакция бонусов'
+        verbose_name_plural = 'Транзакции бонусов'
 
     def __str__(self):
-        return f"{self.transaction_type.capitalize()} {self.points} баллов"
+        return f"{self.transaction_type.capitalize()} {self.points} бонусов"
     
 
 class PointsSystemSettings(models.Model):
-    points_per_100_rubles = models.PositiveIntegerField(default=0, verbose_name='Кол-во баллов за 100 р.')
-    points_per_1_percent = models.PositiveIntegerField(default=0, verbose_name='Кол-во баллов за 1%')
-    new_user_points = models.PositiveIntegerField(default=0, verbose_name='Баллы за регистрацию')
+    points_per_100_rubles = models.PositiveIntegerField(default=0, verbose_name='Кол-во бонусов за 100 р.')
+    points_per_1_percent = models.PositiveIntegerField(default=0, verbose_name='Кол-во бонусов за 1%')
+    new_user_points = models.PositiveIntegerField(default=0, verbose_name='Бонусы за регистрацию')
 
     def save(self, *args, **kwargs):
         if not self.pk and PointsSystemSettings.objects.exists():
