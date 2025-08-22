@@ -142,35 +142,49 @@ class UserAvatarProgressAdmin(admin.ModelAdmin):
         return "Нет изображения"
     current_image_preview.short_description = "Текущее изображение"
 
+
 @admin.register(AvatarOutfit)
 class AvatarOutfitAdmin(admin.ModelAdmin):
-    list_display = ('avatar_stage', 'price', 'outfit_preview', 'custom_img_preview')
+    list_display = ('outfit_preview_list', 'avatar_stage', 'price')
+    list_display_links = ('outfit_preview_list', 'avatar_stage', 'price')
     list_filter = ('avatar_stage__avatar', 'avatar_stage__stage')
     search_fields = ('avatar_stage__avatar__name', 'avatar_stage__stage__name')
     list_per_page = 20
 
     fieldsets = (
         ('Основная информация', {
-            'fields': ('avatar_stage', 'outfit', 'price', 'custom_img', 'custom_animations')
+            'fields': ('avatar_stage', 'price')
         }),
-        ('Превью', {
-            'fields': ('outfit_preview', 'custom_img_preview'),
-            'classes': ('collapse',)
+        ('Одежда', {
+            'fields': ('outfit', 'outfit_preview_form')
+        }),
+        ('Аватар в одежде', {
+            'fields': ('custom_img', 'custom_img_preview_form', 'custom_animations')
         }),
     )
-    readonly_fields = ('outfit_preview', 'custom_img_preview')
+    readonly_fields = ('outfit_preview_form', 'custom_img_preview_form')
 
-    def outfit_preview(self, obj):
+    # ====== превью для списка (маленькие) ======
+    def outfit_preview_list(self, obj):
         if obj.outfit:
+            return format_html('<img src="{}" style="max-height: 80px;"/>', obj.outfit.url)
+        return "Нет изображения"
+    outfit_preview_list.short_description = "Превью одежды"
+
+    # ====== превью для формы (большие) ======
+    def outfit_preview_form(self, obj):
+        if obj and obj.outfit:
             return format_html('<img src="{}" style="max-height: 200px;"/>', obj.outfit.url)
         return "Нет изображения"
-    outfit_preview.short_description = "Превью одежды"
+    outfit_preview_form.short_description = "Превью одежды"
 
-    def custom_img_preview(self, obj):
-        if obj.custom_img:
+    def custom_img_preview_form(self, obj):
+        if obj and obj.custom_img:
             return format_html('<img src="{}" style="max-height: 200px;"/>', obj.custom_img.url)
         return "Нет изображения"
-    custom_img_preview.short_description = "Превью аватара в одежде"
+    custom_img_preview_form.short_description = "Превью аватара в одежде"
+
+
 
 @admin.register(OutfitPurchase)
 class OutfitPurchaseAdmin(admin.ModelAdmin):
