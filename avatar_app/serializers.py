@@ -55,7 +55,7 @@ class UserAvatarDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserAvatarProgress
-        fields = ['id', 'avatar', 'current_stage', 'total_spending', 'current_image', 'next_required_spending']
+        fields = ['id', 'avatar', 'current_stage', 'total_spending', 'current_image', 'next_required_spending', 'current_animation']
 
     def get_current_image(self, obj):
         return obj.get_current_image()
