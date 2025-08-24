@@ -4,6 +4,7 @@ from django.utils.html import format_html
 from .models import Building, Floor, Location, Connection, Route, LocationCorner, LocationType, Tour
 from django import forms
 from django.utils.html import mark_safe
+from django.db import models
 
 
 class FloorInline(admin.TabularInline):
@@ -104,6 +105,9 @@ class TourAdmin(admin.ModelAdmin):
     list_filter = ('residents',)
     filter_horizontal = ('residents',)
     readonly_fields = ('image_preview', 'created_at')
+    formfield_overrides = {
+        models.ImageField: {'help_text': "Допустимые размеры: от 1024x512 до 1280x720 пикселей"},
+    }
 
     fieldsets = (
         (None, {
@@ -114,7 +118,7 @@ class TourAdmin(admin.ModelAdmin):
     def image_preview(self, obj):
         if obj.image:
             return mark_safe(
-                f'<img src="{obj.image.url}" width="200" style="object-fit: cover; border-radius: 8px;" />')
+                f'<img src="{obj.image.url}" width="1024" height="512" style="object-fit: cover; border-radius: 8px;" />')
         return 'Нет изображения'
 
     image_preview.short_description = 'Превью изображения'

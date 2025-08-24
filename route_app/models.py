@@ -1,5 +1,7 @@
 from django.db import models
+
 from resident_app.models import Resident
+from dzavod.validators import validate_image_dimensions
 
 
 class Building(models.Model):
@@ -119,7 +121,7 @@ class Connection(models.Model):
 
 class Tour(models.Model):
     name = models.CharField(max_length=150, verbose_name='Название')
-    image = models.ImageField(null=True, blank=True, upload_to='tours/images/', verbose_name='Фото')
+    image = models.ImageField(null=True, blank=True, upload_to='tours/images/', validators=[validate_image_dimensions], verbose_name='Фото')
     description = models.TextField(null=True, blank=True, max_length=255, verbose_name='Описание')
     full_description = models.TextField(null=True, blank=True, verbose_name='Полное описание')
     residents = models.ManyToManyField(Resident, related_name='tours', verbose_name='Резиденты')

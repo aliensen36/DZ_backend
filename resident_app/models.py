@@ -1,5 +1,7 @@
 from django.db import models
 
+from dzavod.validators import validate_image_dimensions
+
 class Category(models.Model):
     name = models.CharField(max_length=255, null=False, verbose_name='Наименование категории')
     description = models.TextField(null=True, blank=True, verbose_name='Описание категории')
@@ -26,7 +28,7 @@ class Resident(models.Model):
     entrance = models.CharField(max_length=10, verbose_name='Вход', null=True, blank=True)
     floor = models.CharField(max_length=10, verbose_name='Этаж')
     office = models.CharField(max_length=10, verbose_name='Офис/Помещение')
-    photo = models.ImageField(upload_to='residents/photos/', null=True, blank=True, verbose_name='Фото')
+    photo = models.ImageField(upload_to='residents/photos/', null=True, blank=True, validators=[validate_image_dimensions], verbose_name='Фото')
     pin_code = models.CharField(max_length=6, unique=True, verbose_name='Пин-код')
     
     categories = models.ManyToManyField(Category, related_name='residents', verbose_name='Категории')

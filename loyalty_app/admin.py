@@ -4,6 +4,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.html import format_html
 from django.contrib.auth import get_user_model
+from django.db import models
 
 from .models import LoyaltyCard, PointsTransaction, Promotion, PointsSystemSettings, UserPromotion
 from .forms import LoyaltyCardForm, PointsTransactionForm, PromotionAdminForm, PointsSystemSettingsAdminForm
@@ -195,6 +196,9 @@ class PromotionAdmin(admin.ModelAdmin):
     search_fields = ('title', 'description', 'resident__name')
     list_editable = ('is_approved',)
     readonly_fields = ('photo_preview',)
+    formfield_overrides = {
+        models.ImageField: {'help_text': "Допустимые размеры: от 1024x512 до 1280x720 пикселей"},
+    }
 
     fieldsets = (
         ('Основная информация', {
@@ -220,7 +224,7 @@ class PromotionAdmin(admin.ModelAdmin):
 
     def photo_preview(self, obj):
         if obj and obj.photo:
-            return format_html('<img src="{}" style="max-height: 200px;"/>', obj.photo.url)
+            return format_html('<img src="{}" style="max-height: 512px; max-width: 1024px"/>', obj.photo.url)
         return "Нет фото"
 
 
