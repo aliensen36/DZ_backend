@@ -74,7 +74,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_spectacular',
     'django_celery_beat',
-    'imagekit',
 
     'user_app.apps.UserAppConfig',
     'mailing_app.apps.MailingAppConfig',
