@@ -13,7 +13,7 @@ class Event(models.Model):
     start_date = models.DateTimeField(verbose_name='Дата начала')
     end_date = models.DateTimeField(verbose_name='Дата окончания')
     location = models.CharField(max_length=100, verbose_name='Место проведения')
-    photo = ProcessedImageField(upload_to='events/photos/', processors=[ResizeToFit(1024, 512)], verbose_name='Фото')
+    photo = ProcessedImageField(upload_to='events/photos/', processors=[ResizeToFit(1280, 765)], verbose_name='Фото')
     # Флажки
     enable_registration = models.BooleanField("Доступна регистрация", default=False)
     enable_tickets = models.BooleanField("Доступна покупка билетов", default=False)

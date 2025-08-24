@@ -86,7 +86,7 @@ class EventAdmin(admin.ModelAdmin):
 
     def photo_preview(self, obj):
         if obj and obj.photo:
-            return format_html('<img src="{}" style="max-height: 200px;"/>', obj.photo.url)
+            return format_html('<img src="{}" style="max-height: 765px; max-width: 1280px"/>', obj.photo.url)
         return "Нет фото"
     photo_preview.short_description = "Превью фото"
 
