@@ -1,6 +1,6 @@
 from django.db import models
 
-from dzavod.validators import validate_image_dimensions
+from dzavod.validators import validate_image
 
 
 class Event(models.Model):
@@ -11,7 +11,7 @@ class Event(models.Model):
     start_date = models.DateTimeField(verbose_name='Дата начала')
     end_date = models.DateTimeField(verbose_name='Дата окончания')
     location = models.CharField(max_length=100, verbose_name='Место проведения')
-    photo = models.ImageField(upload_to='events/photos/', validators=[validate_image_dimensions], verbose_name='Фото')
+    photo = models.ImageField(upload_to='events/photos/', validators=[validate_image], verbose_name='Фото')
     # Флажки
     enable_registration = models.BooleanField("Доступна регистрация", default=False)
     enable_tickets = models.BooleanField("Доступна покупка билетов", default=False)

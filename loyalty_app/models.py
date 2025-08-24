@@ -3,7 +3,7 @@ import string
 from django.db import models
 from dzavod import settings
 from resident_app.models import Resident
-from dzavod.validators import validate_image_dimensions
+from dzavod.validators import validate_image
 
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -80,7 +80,7 @@ class Promotion(models.Model):
     description = models.TextField(max_length=750, verbose_name='Описание акции')
     start_date = models.DateTimeField(verbose_name='Дата начала акции')
     end_date = models.DateTimeField(verbose_name='Дата окончания акции')
-    photo = models.ImageField(upload_to='promotions/photos/', validators=[validate_image_dimensions], verbose_name='Фото акции')
+    photo = models.ImageField(upload_to='promotions/photos/', validators=[validate_image], verbose_name='Фото акции')
     is_approved = models.BooleanField(default=False, verbose_name='Одобрена ли акция')
     discount_percent = models.DecimalField(max_digits=5, decimal_places=2, null=False, blank=False, verbose_name='Процент скидки')
     promotional_code = models.CharField(max_length=20, unique=True, verbose_name='Промокод')
