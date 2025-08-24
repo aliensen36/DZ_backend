@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from django.db import models
 
 from .models import MapMarker, Category, Resident
 from mailing_app.models import Subscription
@@ -25,6 +26,9 @@ class ResidentAdmin(admin.ModelAdmin):
     list_display_links = ('name', 'building', 'entrance', 'floor', 'office')
     list_filter = ('building', 'entrance', 'floor', 'office')
     search_fields = ('name', 'email', 'phone_number', 'pin_code')
+    formfield_overrides = {
+        models.ImageField: {'help_text': "Допустимые размеры: от 1024x512 до 1280x720 пикселей"},
+    }
     list_per_page = 20
     ordering = ('name',)
     filter_horizontal = ('categories',)
@@ -89,6 +93,6 @@ class ResidentAdmin(admin.ModelAdmin):
 
     def photo_preview(self, obj):
         if obj and obj.photo:
-            return format_html('<img src="{}" style="max-height: 200px;"/>', obj.photo.url)
+            return format_html('<img src="{}" style="max-height: 512px; max-width: 1024px"/>', obj.photo.url)
         return "Нет фото"
     photo_preview.short_description = "Превью фото"

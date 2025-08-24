@@ -189,20 +189,6 @@ class UserMeViewSet(viewsets.ViewSet):
 
         serializer = UserPromotionDisplaySerializer(user_promotion)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @action(detail=False, methods=['patch'], url_path='me/update')
-    def update_me(self, request):
-        """
-        Частично обновляет данные текущего пользователя.
-        """
-        user = request.user
-        serializer = UserSerializer(user, data=request.data, partial=True)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     @action(detail=False, methods=['get'], url_path='me/referral-link')
     def referral_link(self, request):

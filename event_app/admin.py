@@ -2,6 +2,7 @@ from django.utils.html import format_html
 from django.utils import timezone
 from django.contrib import admin
 from django_celery_beat.models import SolarSchedule, ClockedSchedule
+from django.db import models
 
 from .models import Event
 from .forms import EventAdminForm
@@ -26,6 +27,9 @@ class EventAdmin(admin.ModelAdmin):
         'location',
         'is_active',)
     list_filter = ('start_date', 'end_date', 'location')
+    formfield_overrides = {
+        models.ImageField: {'help_text': "Допустимые размеры: от 1024x512 до 1280x720 пикселей"},
+    }
     search_fields = ('title', 'description', 'info', 'location')
     list_per_page = 20
     ordering = ('start_date',)
@@ -86,7 +90,7 @@ class EventAdmin(admin.ModelAdmin):
 
     def photo_preview(self, obj):
         if obj and obj.photo:
-            return format_html('<img src="{}" style="max-height: 765px; max-width: 1280px"/>', obj.photo.url)
+            return format_html('<img src="{}" style="max-height: 512px; max-width: 1024px"/>', obj.photo.url)
         return "Нет фото"
     photo_preview.short_description = "Превью фото"
 
