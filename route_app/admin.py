@@ -118,7 +118,7 @@ class TourAdmin(admin.ModelAdmin):
     def image_preview(self, obj):
         if obj.image:
             return mark_safe(
-                f'<img src="{obj.image.url}" width="1024" height="512" style="object-fit: cover; border-radius: 8px;" />')
+                f'<img src="{obj.image.url}" width="200" style="object-fit: cover; border-radius: 8px;" />')
         return 'Нет изображения'
 
     image_preview.short_description = 'Превью изображения'
