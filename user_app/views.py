@@ -60,7 +60,7 @@ class UserViewSet(
     lookup_field = 'tg_id'
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
+    permission_classes = [IsBotAuthenticated | IsAuthenticated]
 
     @extend_schema(
         tags=["Пользователи"],
