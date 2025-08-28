@@ -60,7 +60,16 @@ class UserViewSet(
     lookup_field = 'tg_id'
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
+    
+    def get_permissions(self):
+        if self.action == 'list':
+            permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
+        elif self.action in ['create', 'retrieve', 'partial_update', 'get_by_phone']:
+            permission_classes = [IsBotAuthenticated | IsAuthenticated]
+        else:
+            permission_classes = [IsAuthenticated]
+
+        return [perm() if isinstance(perm, type) else perm for perm in permission_classes]
 
     @extend_schema(
         tags=["Пользователи"],
