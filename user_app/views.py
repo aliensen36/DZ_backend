@@ -60,7 +60,16 @@ class UserViewSet(
     lookup_field = 'tg_id'
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsBotAuthenticated | IsAuthenticated]
+    
+    def get_permissions(self):
+        if self.action == 'list':
+            permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
+        elif self.action in ['create', 'retrieve', 'partial_update', 'get_by_phone']:
+            permission_classes = [IsBotAuthenticated | IsAuthenticated]
+        else:
+            permission_classes = [IsAuthenticated]
+
+        return [perm() if isinstance(perm, type) else perm for perm in permission_classes]
 
     @extend_schema(
         tags=["Пользователи"],
@@ -191,6 +200,7 @@ class UserMeViewSet(viewsets.ViewSet):
         )
         data["avatar"] = UserAvatarDetailSerializer(user_avatar).data if user_avatar else None
         return Response(data)
+<<<<<<< HEAD
 
     @extend_schema(
         tags=["Пользователи"],
@@ -198,6 +208,23 @@ class UserMeViewSet(viewsets.ViewSet):
         description="Возвращает список активных промокодов текущего пользователя.",
         responses={200: UserPromotionDisplaySerializer(many=True), 404: OpenApiResponse(description="Нет промокодов")},
     )
+=======
+    
+    @action(detail=False, methods=['patch'], url_path='me/update')
+    def update_me(self, request):
+        """
+        Частично обновляет данные текущего пользователя.
+        """
+        user = request.user
+        serializer = UserSerializer(user, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+>>>>>>> 5d1725b (add me/update to UserMeViewSet)
     @action(detail=False, methods=['get'], url_path='me/promocodes')
     def my_promocodes(self, request):
         user = request.user
