@@ -63,9 +63,9 @@ class UserViewSet(
     
     def get_permissions(self):
         if self.action == 'list':
-            return [(IsBotAuthenticated | (IsAuthenticated & IsAdmin)).resolve()]
+            return [(IsBotAuthenticated | (IsAuthenticated & IsAdmin))()]
         elif self.action in ['create', 'retrieve', 'partial_update', 'get_by_phone']:
-            return [(IsBotAuthenticated | IsAuthenticated).resolve()]
+            return [(IsBotAuthenticated | IsAuthenticated)()]
         else:
             return [IsAuthenticated()]
 
