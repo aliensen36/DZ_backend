@@ -196,10 +196,15 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "DZAVOD API", # название проекта
     "VERSION": "0.0.1", # версия проекта
     "SERVE_INCLUDE_SCHEMA": False, # исключить эндпоинт /schema
-    "SWAGGER_UI_SETTINGS": {
-        "filter": True, # включить поиск по тегам
+        "SWAGGER_UI_SETTINGS": {
+        "filter": True,
+        "persistAuthorization": True,
     },
-    "COMPONENT_SPLIT_REQUEST": True
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SCHEMA_PATH_PREFIX_TRIM": True,
+    "TAGS_SORTER": "alpha",
+    "OPERATIONS_SORTER": "alpha",
+    'DEFAULT_GENERATOR_CLASS': 'drf_spectacular.generators.SchemaGenerator',
 }
 
 

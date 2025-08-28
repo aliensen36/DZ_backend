@@ -1,9 +1,8 @@
-from drf_spectacular.utils import extend_schema, OpenApiExample, extend_schema_view
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResponse, OpenApiExample
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.viewsets import ModelViewSet
-
 from user_app.auth.permissions import IsBotAuthenticated
 from .navigation import find_shortest_path
 from rest_framework import viewsets, status
@@ -18,48 +17,104 @@ from .serializers import (
 )
 
 
-@extend_schema(tags=['Buildings'])
+# =================================================================================================
+# Строения
+# =================================================================================================
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=['Маршруты/Строения'],
+        summary="Получить список зданий",
+        description="Возвращает список всех зданий.",
+        responses={200: BuildingSerializer(many=True)},
+    ),
+    retrieve=extend_schema(
+        tags=['Маршруты/Строения'],
+        summary="Получить здание по ID",
+        description="Возвращает информацию о конкретном здании.",
+        responses={200: BuildingSerializer},
+    ),
+    create=extend_schema(
+        tags=['Маршруты/Строения'],
+        summary="Создать здание",
+        description="Добавляет новое здание.",
+        responses={201: BuildingSerializer},
+        examples=[OpenApiExample(
+            'Пример',
+            value={"name": "Главный корпус", "description": "Описание здания"}
+        )]
+    ),
+    update=extend_schema(
+        tags=['Маршруты/Строения'],
+        summary="Обновить здание (PUT)",
+        description="Полностью обновляет данные здания.",
+        responses={200: BuildingSerializer},
+    ),
+    partial_update=extend_schema(
+        tags=['Маршруты/Строения'],
+        summary="Частично обновить здание (PATCH)",
+        description="Изменяет часть данных здания.",
+        responses={200: BuildingSerializer},
+    ),
+    destroy=extend_schema(
+        tags=['Маршруты/Строения'],
+        summary="Удалить здание",
+        description="Удаляет здание по ID.",
+        responses={204: OpenApiResponse(description="Здание удалено")},
+    ),
+)
 class BuildingViewSet(viewsets.ModelViewSet):
     queryset = Building.objects.all()
     serializer_class = BuildingSerializer
 
 
-@extend_schema(tags=['Floors'])
+# =================================================================================================
+# Этажи
+# =================================================================================================
+
+
+@extend_schema(tags=['Этажи'])
 class FloorViewSet(viewsets.ModelViewSet):
     queryset = Floor.objects.all()
     serializer_class = FloorSerializer
 
 
-@extend_schema(tags=['Location Types'])
+# =================================================================================================
+# Типы локаций
+# =================================================================================================
+
+
+@extend_schema(tags=['Типы локаций'])
 class LocationTypeViewSet(viewsets.ModelViewSet):
     queryset = LocationType.objects.all()
     serializer_class = LocationTypeSerializer
 
 
-@extend_schema(tags=['Locations'])
+@extend_schema(tags=['Локации'])
 class LocationViewSet(viewsets.ModelViewSet):
     queryset = Location.objects.all()
     serializer_class = LocationSerializer
 
 
-@extend_schema(tags=['Location Corners'])
+@extend_schema(tags=['Углы локации'])
 class LocationCornerViewSet(viewsets.ModelViewSet):
     queryset = LocationCorner.objects.all()
     serializer_class = LocationCornerSerializer
 
 
-@extend_schema(tags=['Connections'])
+@extend_schema(tags=['Связи (навигация)'])
 class ConnectionViewSet(viewsets.ModelViewSet):
     queryset = Connection.objects.all()
     serializer_class = ConnectionSerializer
 
 
-@extend_schema(tags=['Routes'])
+@extend_schema(tags=['Маршруты'])
 class RouteViewSet(viewsets.ModelViewSet):
     queryset = Route.objects.all()
     serializer_class = RouteSerializer
 
     @extend_schema(
+        tags=['Маршруты'],
         responses={200: LocationSerializer(many=True)},
         description="Возвращает путь от начальной до конечной точки маршрута"
     )
@@ -82,14 +137,17 @@ class RouteViewSet(viewsets.ModelViewSet):
 
 @extend_schema_view(
     list=extend_schema(
+        tags=['Туры'],
         summary="Получить список туров",
         description="Возвращает список всех туров, отсортированных по дате создания (сначала новые)."
     ),
     retrieve=extend_schema(
+        tags=['Туры'],
         summary="Получить тур по ID",
         description="Возвращает детальную информацию о туре по его ID."
     ),
     create=extend_schema(
+        tags=['Туры'],
         summary="Создать тур",
         description="Создает новый тур. Требуется авторизация.",
         examples=[
