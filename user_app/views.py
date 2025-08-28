@@ -200,7 +200,6 @@ class UserMeViewSet(viewsets.ViewSet):
         )
         data["avatar"] = UserAvatarDetailSerializer(user_avatar).data if user_avatar else None
         return Response(data)
-<<<<<<< HEAD
 
     @extend_schema(
         tags=["Пользователи"],
@@ -208,23 +207,6 @@ class UserMeViewSet(viewsets.ViewSet):
         description="Возвращает список активных промокодов текущего пользователя.",
         responses={200: UserPromotionDisplaySerializer(many=True), 404: OpenApiResponse(description="Нет промокодов")},
     )
-=======
-    
-    @action(detail=False, methods=['patch'], url_path='me/update')
-    def update_me(self, request):
-        """
-        Частично обновляет данные текущего пользователя.
-        """
-        user = request.user
-        serializer = UserSerializer(user, data=request.data, partial=True)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
->>>>>>> 5d1725b (add me/update to UserMeViewSet)
     @action(detail=False, methods=['get'], url_path='me/promocodes')
     def my_promocodes(self, request):
         user = request.user
