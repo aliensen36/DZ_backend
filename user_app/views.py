@@ -63,13 +63,11 @@ class UserViewSet(
     
     def get_permissions(self):
         if self.action == 'list':
-            permission_classes = [IsBotAuthenticated | (IsAuthenticated & IsAdmin)]
+            return [(IsBotAuthenticated | (IsAuthenticated & IsAdmin)).resolve()]
         elif self.action in ['create', 'retrieve', 'partial_update', 'get_by_phone']:
-            permission_classes = [IsBotAuthenticated | IsAuthenticated]
+            return [(IsBotAuthenticated | IsAuthenticated).resolve()]
         else:
-            permission_classes = [IsAuthenticated]
-
-        return [perm() if isinstance(perm, type) else perm for perm in permission_classes]
+            return [IsAuthenticated()]
 
     @extend_schema(
         tags=["Пользователи"],
