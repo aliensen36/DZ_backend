@@ -192,21 +192,34 @@ REST_FRAMEWORK = {
     ],
 }
 
+
 SPECTACULAR_SETTINGS = {
-    "TITLE": "DZAVOD API", # название проекта
-    "VERSION": "0.0.1", # версия проекта
-    "SERVE_INCLUDE_SCHEMA": False, # исключить эндпоинт /schema
-        "SWAGGER_UI_SETTINGS": {
+    "TITLE": "DZAVOD API",
+    "VERSION": "0.0.1",
+    "SERVE_INCLUDE_SCHEMA": False,
+
+    "SWAGGER_UI_SETTINGS": {
         "filter": True,
         "persistAuthorization": True,
     },
+
     "COMPONENT_SPLIT_REQUEST": True,
     "SCHEMA_PATH_PREFIX_TRIM": True,
     "TAGS_SORTER": "alpha",
     "OPERATIONS_SORTER": "alpha",
-    'DEFAULT_GENERATOR_CLASS': 'drf_spectacular.generators.SchemaGenerator',
-}
 
+    "TAGS": [
+        {"name": "Пользователи", "description": "Управление пользователями"},
+        {"name": "Маршруты", "description": "Работа с картой"},
+    ],
+
+    # "EXTENSIONS_INFO": {
+    #     "x-tagGroups": [
+    #         {"name": "Пользователи", "tags": ["Пользователи"]},
+    #         {"name": "Маршруты", "tags": ["Строения", "Этажи"]},
+    #     ]
+    # }
+}
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),

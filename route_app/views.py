@@ -2,7 +2,6 @@ from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiResp
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from rest_framework.viewsets import ModelViewSet
 from user_app.auth.permissions import IsBotAuthenticated
 from .navigation import find_shortest_path
 from rest_framework import viewsets, status
@@ -23,43 +22,43 @@ from .serializers import (
 
 @extend_schema_view(
     list=extend_schema(
-        tags=['Маршруты / Строения'],
-        summary="Получить список зданий",
-        description="Возвращает список всех зданий.",
+        tags=['Маршруты'],
+        summary="Список строений",
+        description="Возвращает список всех строений.",
         responses={200: BuildingSerializer(many=True)},
     ),
     retrieve=extend_schema(
-        tags=['Маршруты / Строения'],
-        summary="Получить здание по ID",
-        description="Возвращает информацию о конкретном здании.",
+        tags=['Маршруты'],
+        summary="Получить строение по ID",
+        description="Возвращает информацию о конкретном строении.",
         responses={200: BuildingSerializer},
     ),
     create=extend_schema(
-        tags=['Маршруты / Строения'],
-        summary="Создать здание",
-        description="Добавляет новое здание.",
+        tags=['Маршруты'],
+        summary="Создать строение",
+        description="Добавляет новое строение.",
         responses={201: BuildingSerializer},
         examples=[OpenApiExample(
             'Пример',
-            value={"name": "Главный корпус", "description": "Описание здания"}
+            value={"name": "2", "description": "Описание строения"}
         )]
     ),
     update=extend_schema(
-        tags=['Маршруты / Строения'],
-        summary="Обновить здание (PUT)",
-        description="Полностью обновляет данные здания.",
+        tags=['Маршруты'],
+        summary="Обновить данные строения",
+        description="Полностью обновляет данные строения.",
         responses={200: BuildingSerializer},
     ),
     partial_update=extend_schema(
-        tags=['Маршруты / Строения'],
-        summary="Частично обновить здание (PATCH)",
-        description="Изменяет часть данных здания.",
+        tags=['Маршруты'],
+        summary="Частично обновить данные строения",
+        description="Изменяет часть данных строения.",
         responses={200: BuildingSerializer},
     ),
     destroy=extend_schema(
-        tags=['Маршруты / Строения'],
-        summary="Удалить здание",
-        description="Удаляет здание по ID.",
+        tags=['Маршруты'],
+        summary="Удалить строение",
+        description="Удаляет строение по ID.",
         responses={204: OpenApiResponse(description="Здание удалено")},
     ),
 )
@@ -75,37 +74,37 @@ class BuildingViewSet(viewsets.ModelViewSet):
 
 @extend_schema_view(
     list=extend_schema(
-        tags=['Маршруты / Этажи'],
-        summary="Получить список этажей",
+        tags=['Маршруты'],
+        summary="Список этажей",
         description="Возвращает список всех этажей.",
         responses={200: FloorSerializer(many=True)},
     ),
     retrieve=extend_schema(
-        tags=['Маршруты / Этажи'],
+        tags=['Маршруты'],
         summary="Получить этаж по ID",
         description="Возвращает информацию об этаже.",
         responses={200: FloorSerializer},
     ),
     create=extend_schema(
-        tags=['Маршруты / Этажи'],
+        tags=['Маршруты'],
         summary="Создать этаж",
-        description="Добавляет новый этаж в здание.",
+        description="Добавляет новый этаж.",
         responses={201: FloorSerializer},
     ),
     update=extend_schema(
-        tags=['Маршруты / Этажи'],
-        summary="Обновить этаж (PUT)",
+        tags=['Маршруты'],
+        summary="Обновить этаж",
         description="Полностью обновляет данные этажа.",
         responses={200: FloorSerializer},
     ),
     partial_update=extend_schema(
-        tags=['Маршруты / Этажи'],
-        summary="Частично обновить этаж (PATCH)",
+        tags=['Маршруты'],
+        summary="Частично обновить этаж",
         description="Изменяет часть данных этажа.",
         responses={200: FloorSerializer},
     ),
     destroy=extend_schema(
-        tags=['Маршруты / Этажи'],
+        tags=['Маршруты'],
         summary="Удалить этаж",
         description="Удаляет этаж по ID.",
         responses={204: OpenApiResponse(description="Этаж удалён")},
@@ -123,37 +122,37 @@ class FloorViewSet(viewsets.ModelViewSet):
 
 @extend_schema_view(
     list=extend_schema(
-        tags=['Маршруты / Типы локаций'],
-        summary="Получить список типов локаций",
+        tags=['Маршруты'],
+        summary="Список типов локаций",
         description="Возвращает список всех типов локаций.",
         responses={200: LocationTypeSerializer(many=True)},
     ),
     retrieve=extend_schema(
-        tags=['Маршруты / Типы локаций'],
+        tags=['Маршруты'],
         summary="Получить тип локации по ID",
         description="Возвращает информацию о типе локации.",
         responses={200: LocationTypeSerializer},
     ),
     create=extend_schema(
-        tags=['Маршруты / Типы локаций'],
+        tags=['Маршруты'],
         summary="Создать тип локации",
         description="Добавляет новый тип локации.",
         responses={201: LocationTypeSerializer},
     ),
     update=extend_schema(
-        tags=['Маршруты / Типы локаций'],
-        summary="Обновить тип локации (PUT)",
+        tags=['Маршруты'],
+        summary="Обновить тип локации",
         description="Полностью обновляет данные типа локации.",
         responses={200: LocationTypeSerializer},
     ),
     partial_update=extend_schema(
-        tags=['Маршруты / Типы локаций'],
-        summary="Частично обновить тип локации (PATCH)",
+        tags=['Маршруты'],
+        summary="Частично обновить тип локации",
         description="Изменяет часть данных типа локации.",
         responses={200: LocationTypeSerializer},
     ),
     destroy=extend_schema(
-        tags=['Маршруты / Типы локаций'],
+        tags=['Маршруты'],
         summary="Удалить тип локации",
         description="Удаляет тип локации по ID.",
         responses={204: OpenApiResponse(description="Тип удалён")},
@@ -171,37 +170,37 @@ class LocationTypeViewSet(viewsets.ModelViewSet):
 
 @extend_schema_view(
     list=extend_schema(
-        tags=['Маршруты / Локации'],
-        summary="Получить список локаций",
+        tags=['Маршруты'],
+        summary="Список локаций",
         description="Возвращает список всех локаций.",
         responses={200: LocationSerializer(many=True)},
     ),
     retrieve=extend_schema(
-        tags=['Маршруты / Локации'],
+        tags=['Маршруты'],
         summary="Получить локацию по ID",
         description="Возвращает информацию о конкретной локации.",
         responses={200: LocationSerializer},
     ),
     create=extend_schema(
-        tags=['Маршруты / Локации'],
+        tags=['Маршруты'],
         summary="Создать локацию",
         description="Добавляет новую локацию.",
         responses={201: LocationSerializer},
     ),
     update=extend_schema(
-        tags=['Маршруты / Локации'],
-        summary="Обновить локацию (PUT)",
+        tags=['Маршруты'],
+        summary="Обновить локацию",
         description="Полностью обновляет данные локации.",
         responses={200: LocationSerializer},
     ),
     partial_update=extend_schema(
-        tags=['Маршруты / Локации'],
-        summary="Частично обновить локацию (PATCH)",
+        tags=['Маршруты'],
+        summary="Частично обновить локацию",
         description="Изменяет часть данных локации.",
         responses={200: LocationSerializer},
     ),
     destroy=extend_schema(
-        tags=['Маршруты / Локации'],
+        tags=['Маршруты'],
         summary="Удалить локацию",
         description="Удаляет локацию по ID.",
         responses={204: OpenApiResponse(description="Локация удалена")},
@@ -219,37 +218,37 @@ class LocationViewSet(viewsets.ModelViewSet):
 
 @extend_schema_view(
     list=extend_schema(
-        tags=['Маршруты / Углы локации'],
-        summary="Получить список углов",
+        tags=['Маршруты'],
+        summary="Список углов",
         description="Возвращает список всех углов локаций.",
         responses={200: LocationCornerSerializer(many=True)},
     ),
     retrieve=extend_schema(
-        tags=['Маршруты / Углы локации'],
+        tags=['Маршруты'],
         summary="Получить угол по ID",
         description="Возвращает данные угла локации.",
         responses={200: LocationCornerSerializer},
     ),
     create=extend_schema(
-        tags=['Маршруты / Углы локации'],
+        tags=['Маршруты'],
         summary="Создать угол",
         description="Добавляет новый угол для локации.",
         responses={201: LocationCornerSerializer},
     ),
     update=extend_schema(
-        tags=['Маршруты / Углы локации'],
-        summary="Обновить угол (PUT)",
+        tags=['Маршруты'],
+        summary="Обновить угол",
         description="Полностью обновляет данные угла.",
         responses={200: LocationCornerSerializer},
     ),
     partial_update=extend_schema(
-        tags=['Маршруты / Углы локации'],
-        summary="Частично обновить угол (PATCH)",
+        tags=['Маршруты'],
+        summary="Частично обновить угол",
         description="Изменяет часть данных угла.",
         responses={200: LocationCornerSerializer},
     ),
     destroy=extend_schema(
-        tags=['Маршруты / Углы локации'],
+        tags=['Маршруты'],
         summary="Удалить угол",
         description="Удаляет угол по ID.",
         responses={204: OpenApiResponse(description="Угол удалён")},
@@ -267,37 +266,37 @@ class LocationCornerViewSet(viewsets.ModelViewSet):
 
 @extend_schema_view(
     list=extend_schema(
-        tags=['Маршруты / Связи'],
-        summary="Получить список связей",
+        tags=['Маршруты'],
+        summary="Список связей",
         description="Возвращает список всех связей между локациями.",
         responses={200: ConnectionSerializer(many=True)},
     ),
     retrieve=extend_schema(
-        tags=['Маршруты / Связи'],
+        tags=['Маршруты'],
         summary="Получить связь по ID",
         description="Возвращает данные связи.",
         responses={200: ConnectionSerializer},
     ),
     create=extend_schema(
-        tags=['Маршруты / Связи'],
+        tags=['Маршруты'],
         summary="Создать связь",
         description="Создает новую связь между локациями.",
         responses={201: ConnectionSerializer},
     ),
     update=extend_schema(
-        tags=['Маршруты / Связи'],
-        summary="Обновить связь (PUT)",
+        tags=['Маршруты'],
+        summary="Обновить связь",
         description="Полностью обновляет данные связи.",
         responses={200: ConnectionSerializer},
     ),
     partial_update=extend_schema(
-        tags=['Маршруты / Связи'],
-        summary="Частично обновить связь (PATCH)",
+        tags=['Маршруты'],
+        summary="Частично обновить связь",
         description="Изменяет часть данных связи.",
         responses={200: ConnectionSerializer},
     ),
     destroy=extend_schema(
-        tags=['Маршруты / Связи'],
+        tags=['Маршруты'],
         summary="Удалить связь",
         description="Удаляет связь по ID.",
         responses={204: OpenApiResponse(description="Связь удалена")},
@@ -314,37 +313,37 @@ class ConnectionViewSet(viewsets.ModelViewSet):
 
 @extend_schema_view(
     list=extend_schema(
-        tags=['Маршруты / Маршруты'],
+        tags=['Маршруты'],
         summary="Список маршрутов",
         description="Возвращает список всех маршрутов.",
         responses={200: RouteSerializer(many=True)}
     ),
     retrieve=extend_schema(
-        tags=['Маршруты / Маршруты'],
+        tags=['Маршруты'],
         summary="Получить маршрут по ID",
         description="Возвращает детальную информацию о маршруте по ID.",
         responses={200: RouteSerializer, 404: OpenApiResponse(description="Маршрут не найден")}
     ),
     create=extend_schema(
-        tags=['Маршруты / Маршруты'],
+        tags=['Маршруты'],
         summary="Создать маршрут",
         description="Создает новый маршрут.",
         responses={201: RouteSerializer}
     ),
     update=extend_schema(
-        tags=['Маршруты / Маршруты'],
-        summary="Обновить маршрут (PUT)",
+        tags=['Маршруты'],
+        summary="Обновить маршрут",
         description="Полностью обновляет данные маршрута.",
         responses={200: RouteSerializer, 404: OpenApiResponse(description="Маршрут не найден")}
     ),
     partial_update=extend_schema(
-        tags=['Маршруты / Маршруты'],
-        summary="Частично обновить маршрут (PATCH)",
+        tags=['Маршруты'],
+        summary="Частично обновить маршрут",
         description="Изменяет часть данных маршрута.",
         responses={200: RouteSerializer, 404: OpenApiResponse(description="Маршрут не найден")}
     ),
     destroy=extend_schema(
-        tags=['Маршруты / Маршруты'],
+        tags=['Маршруты'],
         summary="Удалить маршрут",
         description="Удаляет маршрут по ID.",
         responses={204: OpenApiResponse(description="Маршрут удалён"), 404: OpenApiResponse(description="Маршрут не найден")}
@@ -356,7 +355,7 @@ class RouteViewSet(viewsets.ModelViewSet):
     permission_classes = [IsBotAuthenticated | IsAuthenticated]
 
     @extend_schema(
-        tags=['Маршруты / Маршруты'],
+        tags=['Маршруты'],
         summary="Навигация по маршруту",
         description="Возвращает путь от начальной до конечной точки маршрута.",
         responses={
@@ -380,33 +379,32 @@ class RouteViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-
 # =================================================================================================
 # Туры
 # =================================================================================================
 
 @extend_schema_view(
     list=extend_schema(
-        tags=['Маршруты / Туры'],
-        summary="Получить список туров",
-        description="Возвращает список всех туров, отсортированных по дате создания (сначала новые).",
+        tags=['Маршруты'],
+        summary="Список туров",
+        description="Возвращает список всех туров.",
         responses={200: TourSerializer(many=True)}
     ),
     retrieve=extend_schema(
-        tags=['Маршруты / Туры'],
+        tags=['Маршруты'],
         summary="Получить тур по ID",
         description="Возвращает детальную информацию о туре по ID.",
         responses={200: TourSerializer, 404: OpenApiResponse(description="Тур не найден")}
     ),
     create=extend_schema(
-        tags=['Маршруты / Туры'],
+        tags=['Маршруты'],
         summary="Создать тур",
-        description="Создает новый тур. Требуется авторизация.",
+        description="Создает новый тур.",
         examples=[
             OpenApiExample(
                 'Пример создания',
                 value={
-                    "name": "Тур по Петербургу",
+                    "name": "Тур по детским магазинам",
                     "image": None,
                     "description": "Краткое описание",
                     "full_description": "Полное описание",
@@ -417,21 +415,21 @@ class RouteViewSet(viewsets.ModelViewSet):
         responses={201: TourSerializer}
     ),
     update=extend_schema(
-        tags=['Маршруты / Туры'],
-        summary="Обновить тур (PUT)",
-        description="Полностью обновляет данные тура. Требуется авторизация.",
+        tags=['Маршруты'],
+        summary="Обновить тур",
+        description="Полностью обновляет данные тура.",
         responses={200: TourSerializer, 404: OpenApiResponse(description="Тур не найден")}
     ),
     partial_update=extend_schema(
-        tags=['Маршруты / Туры'],
-        summary="Частично обновить тур (PATCH)",
-        description="Изменяет часть данных тура. Требуется авторизация.",
+        tags=['Маршруты'],
+        summary="Частично обновить тур",
+        description="Изменяет часть данных тура.",
         responses={200: TourSerializer, 404: OpenApiResponse(description="Тур не найден")}
     ),
     destroy=extend_schema(
-        tags=['Маршруты / Туры'],
+        tags=['Маршруты'],
         summary="Удалить тур",
-        description="Удаляет тур по ID. Требуется авторизация.",
+        description="Удаляет тур по ID.",
         responses={204: OpenApiResponse(description="Тур удалён"), 404: OpenApiResponse(description="Тур не найден")}
     ),
 )

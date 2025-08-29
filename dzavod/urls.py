@@ -12,7 +12,7 @@ from resident_app.urls import resident_app_router
 from event_app.urls import event_app_router
 from faq_app.urls import faq_app_router
 from avatar_app.urls import avatar_app_router
-from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 router = DefaultRouter()
 router.registry.extend(user_app_router.registry)
@@ -27,9 +27,21 @@ router.registry.extend(route_app_router.registry)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    # Схема OpenAPI в JSON (для экспорта)
+    path('api/schema/',
+         SpectacularAPIView.as_view(),
+         name='schema'),
+    # Swagger UI
+    path('api/schema/swagger-ui/',
+        SpectacularSwaggerView.as_view(url_name='schema'),
+        name='swagger-ui'),
+    # Redoc
+    path('api/docs/',
+        SpectacularRedocView.as_view(url_name='schema'),
+        name='redoc'),
+
     path('api/', include(router.urls)),
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='docs'),
     path('', include('user_app.urls')),
     path('api/', include('loyalty_app.urls')),
     path('api/', include('resident_app.urls')),
