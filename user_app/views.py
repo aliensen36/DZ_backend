@@ -69,9 +69,6 @@ class UserViewSet(
         else:
             return [IsAuthenticated()]
 
-    @extend_schema(
-        tags=["Пользователи"],
-        description="Управление пользователями (доступно только админам или боту)")
     def list(self, request, *args, **kwargs):
         logger.info("Список всех пользователей")
         response = super().list(request, *args, **kwargs)
