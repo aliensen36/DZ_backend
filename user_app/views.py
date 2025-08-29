@@ -22,28 +22,25 @@ logger = logging.getLogger(__name__)
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
+@extend_schema(tags=["Пользователи"])
 @extend_schema_view(
     list=extend_schema(
-        tags=["Пользователи"],
         summary="Список пользователей",
         description="Доступно только админам или боту. Возвращает список всех пользователей.",
         responses={200: UserSerializer(many=True)},
     ),
     create=extend_schema(
-        tags=["Пользователи"],
         summary="Создание или обновление пользователя",
         description="Создаёт нового пользователя по tg_id или обновляет существующего.",
         request=UserSerializer,
         responses={201: UserSerializer, 200: UserSerializer},
     ),
     retrieve=extend_schema(
-        tags=["Пользователи"],
         summary="Информация о пользователе",
         description="Возвращает данные конкретного пользователя по tg_id.",
         responses={200: UserSerializer, 404: OpenApiResponse(description="Пользователь не найден")},
     ),
     partial_update=extend_schema(
-        tags=["Пользователи"],
         summary="Частичное обновление пользователя",
         description="Обновляет поля пользователя (по tg_id).",
         request=UserSerializer,
