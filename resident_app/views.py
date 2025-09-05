@@ -8,7 +8,7 @@ from mailing_app.models import Subscription
 from .serializers import ResidentSerializer, CategorySerializer, ResidentMapSerializer
 from user_app.auth.permissions import IsAdmin, IsBotAuthenticated
 from drf_spectacular.utils import (
-    extend_schema, extend_schema_view, OpenApiParameter, OpenApiTypes
+    extend_schema, extend_schema_view, OpenApiParameter, OpenApiTypes, OpenApiExample, OpenApiResponse
 )
 from django.http import Http404
 from django.db import transaction
@@ -27,6 +27,8 @@ def get_descendants_ids(category):
     collect_children(category)
     return list(descendants | {category.id})
 
+
+@extend_schema(tags=["Категории резидентов"])
 @extend_schema_view(
     list=extend_schema(
         summary="Список категорий",
@@ -43,13 +45,25 @@ def get_descendants_ids(category):
                 required=False,
                 description="Если `true` — вернуть все категории с вложенными подкатегориями"
             )
+        ],
+        examples=[
+            OpenApiExample(
+                'Пример запроса основных категорий',
+                value={},
+                description='Запрос без параметров возвращает только основные категории'
+            ),
+            OpenApiExample(
+                'Пример запроса полного дерева',
+                value={'tree': True},
+                description='Запрос с tree=true возвращает все категории с иерархией'
+            )
         ]
     ),
-    retrieve=extend_schema(summary="Получить категорию по ID"),
-    create=extend_schema(summary="Создать категорию"),
-    update=extend_schema(summary="Обновить категорию"),
-    partial_update=extend_schema(summary="Частично обновить категорию"),
-    destroy=extend_schema(summary="Удалить категорию"),
+        retrieve=extend_schema(summary="Получить категорию по ID"),
+        create=extend_schema(summary="Создать категорию"),
+        update=extend_schema(summary="Обновить категорию"),
+        partial_update=extend_schema(summary="Частично обновить категорию"),
+        destroy=extend_schema(summary="Удалить категорию"),
 )
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -90,6 +104,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
             )
 
 
+@extend_schema(tags=["Резиденты"])
 @extend_schema_view(
     list=extend_schema(
         summary="Список резидентов",
@@ -104,14 +119,40 @@ class CategoryViewSet(viewsets.ModelViewSet):
                 type=OpenApiTypes.INT,
                 location=OpenApiParameter.QUERY,
                 required=False,
-                description="ID категории, по которой фильтруются резиденты"
+                description="ID категории, по которой фильтруются резиденты",
+                examples=[
+                    OpenApiExample(
+                        'Фильтр по категории 1',
+                        value=1,
+                        description='Фильтрация по категории с ID=1'
+                    )
+                ]
             ),
             OpenApiParameter(
                 name='main',
                 type=OpenApiTypes.BOOL,
                 location=OpenApiParameter.QUERY,
                 required=False,
-                description="Если `true` и категория — основная, то включает резидентов подкатегорий"
+                description="Если `true` и категория — основная, то включает резидентов подкатегорий",
+                examples=[
+                    OpenApiExample(
+                        'Включить подкатегории',
+                        value=True,
+                        description='Включает резидентов из всех подкатегорий основной категории'
+                    )
+                ]
+            )
+        ],
+        examples = [
+            OpenApiExample(
+                'Фильтр по конкретной категории',
+                value={'category_id': 1},
+                description='Возвращает резидентов только указанной категории'
+            ),
+            OpenApiExample(
+                'Фильтр по основной категории с подкатегориями',
+                value={'category_id': 1, 'main': True},
+                description='Возвращает резидентов основной категории и всех её подкатегорий'
             )
         ]
     ),
@@ -163,21 +204,49 @@ class PinCodeVerifyView(APIView):
     permission_classes = [IsBotAuthenticated | IsAuthenticated]
 
     @extend_schema(
+        tags=['Пин-код резидента'],
         summary="Проверка пин-кода резидента",
         description="Принимает pin_code и возвращает информацию о резиденте, если код верный.",
         request={
             'application/json': {
                 'type': 'object',
                 'properties': {
-                    'pin_code': {'type': 'string'}
+                    'pin_code': {
+                        'type': 'string',
+                        'description': 'Пин-код резидента',
+                        'example': '123456'
+                    }
                 },
                 'required': ['pin_code']
             }
         },
         responses={
-            200: ResidentSerializer,
-            401: OpenApiTypes.OBJECT,
+            200: OpenApiResponse(
+                description='Успешная аутентификация',
+                response=ResidentSerializer
+            ),
+            401: OpenApiResponse(
+                description='Неверный пин-код',
+                response=OpenApiTypes.OBJECT,
+                examples=[
+                    OpenApiExample(
+                        'Пример ошибки',
+                        value={
+                            'status': 'error',
+                            'message': 'Неверный пин-код или пользователь не является администратором'
+                        }
+                    )
+                ]
+            )
         },
+        examples=[
+            OpenApiExample(
+                'Пример запроса',
+                value={'pin_code': '123456'},
+                description='Запрос с пин-кодом для аутентификации'
+            )
+        ]
+
     )
     def post(self, request):
         pin_code = request.data.get('pin_code')
@@ -199,6 +268,7 @@ class MapResidentListView(APIView):
     permission_classes = [IsBotAuthenticated | IsAuthenticated]
 
     @extend_schema(
+        tags=['Метка резидента на карте'],
         summary="Список резидентов с координатами (для карты)",
         description="Возвращает резидентов и их метки на карте. Фильтрация по категориям.",
         parameters=[
@@ -207,10 +277,35 @@ class MapResidentListView(APIView):
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
                 required=False,
-                description='Список ID категорий через запятую, например: `1,2,3`'
+                description='Список ID категорий через запятую, например: `1,2,3`',
+                examples=[
+                    OpenApiExample(
+                        'Фильтр по нескольким категориям',
+                        value='1,2,3',
+                        description='Фильтрация резидентов по категориям 1, 2 и 3'
+                    )
+                ]
             )
         ],
-        responses={200: ResidentMapSerializer(many=True)},
+        responses={
+            200: ResidentMapSerializer(many=True),
+            400: OpenApiResponse(
+                description='Неверный формат параметров',
+                response=OpenApiTypes.OBJECT
+            )
+        },
+        examples=[
+            OpenApiExample(
+                'Запрос всех резидентов',
+                value={},
+                description='Запрос без параметров возвращает всех резидентов с координатами'
+            ),
+            OpenApiExample(
+                'Фильтр по категориям',
+                value={'category_id': '1,2'},
+                description='Запрос возвращает резидентов принадлежащих категориям 1 или 2'
+            )
+        ]
     )
     def get(self, request):
         category_ids = request.query_params.get('category_id')

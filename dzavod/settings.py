@@ -207,18 +207,10 @@ SPECTACULAR_SETTINGS = {
     "SCHEMA_PATH_PREFIX_TRIM": True,
     "TAGS_SORTER": "alpha",
     "OPERATIONS_SORTER": "alpha",
-
     "TAGS": [
         {"name": "Пользователи", "description": "Управление пользователями"},
         {"name": "Маршруты", "description": "Работа с картой"},
     ],
-
-    # "EXTENSIONS_INFO": {
-    #     "x-tagGroups": [
-    #         {"name": "Пользователи", "tags": ["Пользователи"]},
-    #         {"name": "Маршруты", "tags": ["Строения", "Этажи"]},
-    #     ]
-    # }
 }
 
 SIMPLE_JWT = {
