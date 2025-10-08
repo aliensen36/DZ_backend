@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv, find_dotenv
+import dj_database_url
 
 load_dotenv(find_dotenv())
 
@@ -21,7 +22,7 @@ BOT_API_KEY = os.getenv('BOT_API_KEY')
 TELEGRAM_BOT_USERNAME = os.getenv('TELEGRAM_BOT_USERNAME')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     'localhost',
@@ -126,6 +127,15 @@ DATABASES = {
         'PORT': os.getenv('DB_PORT'),
     }
 }
+
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=os.environ.get('DATABASE_URL'),
+#         conn_max_age=600,
+#         ssl_require=True
+#     )
+# }
+
 
 
 # Password validation
