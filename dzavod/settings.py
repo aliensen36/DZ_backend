@@ -33,6 +33,7 @@ ALLOWED_HOSTS = [
     'www.back.design-zavod.tech',
     'design-zavod.tech',
     'www.design-zavod.tech',
+    'dzbackend-production.up.railway.app',
 ] + os.getenv('ALLOWED_HOSTS', '').split()
 
 # Основные доверенные origins (бек и фронт)
