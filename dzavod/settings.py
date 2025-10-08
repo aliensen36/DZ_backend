@@ -35,16 +35,19 @@ ALLOWED_HOSTS = [
     'design-zavod.tech',
     'www.design-zavod.tech',
     'dzbackend-production.up.railway.app',
+    'https://frontend-tau-fawn-68.vercel.app/',
 ] + os.getenv('ALLOWED_HOSTS', '').split()
 
 # Основные доверенные origins (бек и фронт)
 BASE_CORS_ALLOWED_ORIGINS = [
+    'https://frontend-tau-fawn-68.vercel.app/',
     'https://back.design-zavod.tech',
     'https://design-zavod.tech',
     'http://localhost:5173',  # Для тестирования фронта, потом убрать 
 ]
 
-FRONTEND_BASE_URL = "https://design-zavod.tech"
+# FRONTEND_BASE_URL = "https://design-zavod.tech"
+FRONTEND_BASE_URL = 'https://frontend-tau-fawn-68.vercel.app/',
 
 # Динамические origins из переменной окружения
 ENV_CORS_ALLOWED_ORIGINS = [
@@ -130,15 +133,6 @@ DATABASES = {
         'PORT': os.getenv('DB_PORT'),
     }
 }
-
-# DATABASES = {
-#     'default': dj_database_url.config(
-#         default=os.environ.get('DATABASE_URL'),
-#         conn_max_age=600,
-#         ssl_require=True
-#     )
-# }
-
 
 
 # Password validation
