@@ -1,0 +1,12 @@
+[service]
+name = "django-api"
+
+[deploy]
+runtime = "python"
+
+[build]
+builder = "nixpacks"
+
+[variables]
+DISABLE_COLLECTSTATIC = "0"
+DEBUG = "False"
