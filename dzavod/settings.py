@@ -7,7 +7,7 @@ load_dotenv(find_dotenv())
 import importlib
 
 try:
-    storage_module = importlib.import_module('dariedu.storages.supabase_storage')
+    storage_module = importlib.import_module('dzavod.storages.supabase_storage')
     print("✅ SupabaseStorage импортирован успешно")
 except Exception as e:
     print("❌ Ошибка импорта SupabaseStorage:", e)
