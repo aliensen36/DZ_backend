@@ -4,13 +4,6 @@ from datetime import timedelta
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
 
-import importlib
-
-try:
-    storage_module = importlib.import_module('dzavod.storages.supabase_storage')
-    print("✅ SupabaseStorage импортирован успешно")
-except Exception as e:
-    print("❌ Ошибка импорта SupabaseStorage:", e)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -81,6 +74,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_spectacular',
     'django_celery_beat',
+    'storages',
 
     'user_app.apps.UserAppConfig',
     'mailing_app.apps.MailingAppConfig',
@@ -179,9 +173,9 @@ STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-MEDIA_URL = '/media/'
+# MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-DEFAULT_FILE_STORAGE = 'dzavod.storages.supabase_storage.SupabaseStorage'
+
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
@@ -275,3 +269,29 @@ CSRF_TRUSTED_ORIGINS = [
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
 
 WHITENOISE_MANIFEST_STRICT = False
+
+AWS_ACCESS_KEY_ID = os.environ.get('SUPABASE_S3_ACCESS_KEY_ID')  # S3 Access Key
+AWS_SECRET_ACCESS_KEY = os.environ.get('SUPABASE_S3_SECRET_ACCESS_KEY')  # S3 Secret Key
+AWS_STORAGE_BUCKET_NAME = os.environ.get('SUPABASE_S3_BUCKET_NAME')  # Имя бакета
+AWS_S3_REGION_NAME = os.environ.get('SUPABASE_S3_REGION_NAME', 'us-east-1')  # Регион
+AWS_S3_ENDPOINT_URL = os.environ.get('SUPABASE_S3_ENDPOINT_URL')  # Endpoint URL
+
+# Настройки хранилища
+STORAGES = {
+    'default': {
+        'BACKEND': 'storages.backends.s3.S3Storage',
+        'OPTIONS': {
+            'access_key': AWS_ACCESS_KEY_ID,
+            'secret_key': AWS_SECRET_ACCESS_KEY,
+            'bucket_name': AWS_STORAGE_BUCKET_NAME,
+            'region_name': AWS_S3_REGION_NAME,
+            'endpoint_url': AWS_S3_ENDPOINT_URL,
+        },
+    },
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    },
+}
+
+# URL для медиафайлов
+MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/'
