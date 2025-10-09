@@ -2,8 +2,6 @@ import os
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv, find_dotenv
-import dj_database_url
-
 load_dotenv(find_dotenv())
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -243,6 +241,7 @@ LOGGING = {
         },
     },
 }
+
 
 
 CSRF_TRUSTED_ORIGINS = [
