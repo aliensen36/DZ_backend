@@ -30,20 +30,15 @@ ALLOWED_HOSTS = [
     '158.160.25.8',
     '127.0.0.1',
     "backend_django_container", 
-    'back.design-zavod.tech',
-    'www.back.design-zavod.tech',
-    'design-zavod.tech',
-    'www.design-zavod.tech',
     'dzbackend-production.up.railway.app',
-    'https://frontend-tau-fawn-68.vercel.app/',
+    'https://frontend-tau-fawn-68.vercel.app',
+    'frontend-tau-fawn-68.vercel.app',
 ] + os.getenv('ALLOWED_HOSTS', '').split()
 
 # Основные доверенные origins (бек и фронт)
 BASE_CORS_ALLOWED_ORIGINS = [
-    'https://frontend-tau-fawn-68.vercel.app/',
-    'https://back.design-zavod.tech',
-    'https://design-zavod.tech',
-    'http://localhost:5173',  # Для тестирования фронта, потом убрать 
+    'https://frontend-tau-fawn-68.vercel.app',
+    'http://localhost:5173',  # Для тестирования фронта, потом убрать
 ]
 
 # FRONTEND_BASE_URL = "https://design-zavod.tech"
