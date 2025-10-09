@@ -4,6 +4,14 @@ from datetime import timedelta
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
 
+import importlib
+
+try:
+    storage_module = importlib.import_module('dariedu.storages.supabase_storage')
+    print("✅ SupabaseStorage импортирован успешно")
+except Exception as e:
+    print("❌ Ошибка импорта SupabaseStorage:", e)
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
