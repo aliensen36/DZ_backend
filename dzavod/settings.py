@@ -22,8 +22,8 @@ BOT_API_KEY = os.getenv('BOT_API_KEY')
 TELEGRAM_BOT_USERNAME = os.getenv('TELEGRAM_BOT_USERNAME')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = True
-DEBUG = False
+DEBUG = True
+# DEBUG = False
 
 ALLOWED_HOSTS = [
     'localhost',
