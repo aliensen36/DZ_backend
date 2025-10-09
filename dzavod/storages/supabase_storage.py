@@ -21,17 +21,14 @@ class SupabaseStorage(Storage):
     def _save(self, name, content):
         content.seek(0)
         data = content.read()
-
-        # Генерируем уникальное имя файла
         filename = f"{uuid4().hex}_{name}"
-
-        # Загружаем файл в Supabase Storage
+        print(f"[SupabaseStorage] Загружаем файл {filename} в bucket {self.bucket_name}")
         try:
             self.client.storage.from_(self.bucket_name).upload(filename, data)
+            print(f"[SupabaseStorage] Успешно загружено {filename}")
         except Exception as e:
-            print(f"Ошибка при загрузке файла в Supabase: {e}")
+            print(f"[SupabaseStorage] Ошибка: {e}")
             raise e
-
         return filename
 
     def url(self, name):
