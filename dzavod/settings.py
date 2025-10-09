@@ -234,10 +234,25 @@ LOGGING = {
             'class': 'logging.StreamHandler',
         },
     },
+    'root': {  # добавляем корневой логгер
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
     'loggers': {
+        'django': {  # чтобы видеть общие логи Django
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
         'user_app': {
             'handlers': ['console'],
             'level': 'INFO',
+            'propagate': False,
+        },
+        'SupabaseStorage': {  # добавляем наш кастомный логгер
+            'handlers': ['console'],
+            'level': 'DEBUG',  # можно временно поставить DEBUG для детальной информации
+            'propagate': True,
         },
     },
 }
