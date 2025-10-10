@@ -1,4 +1,6 @@
 from datetime import timezone
+
+import requests
 from django.conf import settings
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
@@ -55,17 +57,19 @@ class LoyaltyCardViewSet(viewsets.ViewSet):
             font_medium_bold = ImageFont.load_default()
             font_small = ImageFont.load_default()
 
-        logo_path = os.path.join(settings.MEDIA_ROOT, 'loyalty_cards', 'logo.png')
+        logo_url = f"{settings.MEDIA_URL}loyalty_cards/logo.png"
         logo_y = 20
         logo_x = 30
         logo_height = 0
-        if os.path.exists(logo_path):
-            logo = Image.open(logo_path).convert("RGBA")
+        try:
+            response = requests.get(logo_url, timeout=5)
+            response.raise_for_status()  # Проверяем, что запрос успешен
+            logo = Image.open(BytesIO(response.content)).convert("RGBA")
             logo.thumbnail((150, 150), Image.Resampling.LANCZOS)
             logo_height = logo.height
             img.paste(logo, (logo_x, logo_y), logo)
-        else:
-            logger.warning(f"Логотип не найден по пути: {logo_path}")
+        except Exception as e:
+            logger.warning(f"Не удалось загрузить логотип из {logo_url}: {e}")
 
         first_name = getattr(user, 'user_first_name', None) or getattr(user, 'first_name', 'Не указано')
         last_name = getattr(user, 'user_last_name', None) or getattr(user, 'last_name', 'Не указано')
@@ -107,16 +111,18 @@ class LoyaltyCardViewSet(viewsets.ViewSet):
         card_y = img.height - card_height - 20
         draw.text((card_x, card_y), card_number_text, font=font_small, fill=(0, 0, 0))
 
-        mascot_path = os.path.join(settings.MEDIA_ROOT, 'loyalty_cards', 'mascot.png')
-        if os.path.exists(mascot_path):
-            mascot = Image.open(mascot_path).convert("RGBA")
+        mascot_url = f"{settings.MEDIA_URL}loyalty_cards/mascot.png"  # Публичный URL
+        try:
+            response = requests.get(mascot_url, timeout=5)
+            response.raise_for_status()
+            mascot = Image.open(BytesIO(response.content)).convert("RGBA")
             mascot.thumbnail((200, 200), Image.Resampling.LANCZOS)
             mascot_width, mascot_height = mascot.size
             mascot_x = img.width - mascot_width - 20
             mascot_y = img.height - mascot_height - 20
             img.paste(mascot, (mascot_x, mascot_y), mascot)
-        else:
-            logger.warning(f"Маскот не найден по пути: {mascot_path}")
+        except Exception as e:
+            logger.warning(f"Не удалось загрузить маскот из {mascot_url}: {e}")
 
         buffer = BytesIO()
         img.save(buffer, format='PNG')
