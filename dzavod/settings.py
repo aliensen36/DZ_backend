@@ -294,4 +294,5 @@ STORAGES = {
 }
 
 # URL для медиафайлов
-MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/'
+# MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/'
+MEDIA_URL = 'https://nnpvsgtcvnyrxrbtzumz.supabase.co/storage/v1/object/public/media/'
