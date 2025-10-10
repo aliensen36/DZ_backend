@@ -1,6 +1,8 @@
 import os
 import json
 import logging
+from io import BytesIO
+
 import requests
 from django.core.files.storage import default_storage
 from dotenv import load_dotenv, find_dotenv
