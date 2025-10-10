@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import requests
+from django.core.files.storage import default_storage
 from dotenv import load_dotenv, find_dotenv
 
 # Настройка логирования
@@ -33,7 +34,17 @@ def send_telegram_message(user_id, text, buttons=None, image=None):
         if buttons:
             reply_markup = {"inline_keyboard": buttons}
 
-        if image and hasattr(image, 'path') and image.path:
+        if image:
+            # Проверяем существование файла
+            if not default_storage.exists(image.name):
+                logger.error(f"Файл изображения не найден: {image.name}")
+                return False
+
+            # Читаем содержимое файла
+            image.seek(0)  # Сбрасываем указатель на начало
+            file_content = image.read()
+            logger.info(f"Отправка фото в Telegram: chat_id={user_id}, file={image.name}")
+
             # Отправка фото с подписью и кнопками
             payload = {
                 "chat_id": str(user_id),
@@ -43,9 +54,11 @@ def send_telegram_message(user_id, text, buttons=None, image=None):
             if reply_markup:
                 payload["reply_markup"] = json.dumps(reply_markup)
 
-            with open(image.path, 'rb') as f:
-                logger.info(f"Отправка фото в Telegram: chat_id={user_id}, file={image.path}")
-                response = requests.post(SEND_PHOTO_URL, data=payload, files={'photo': f})
+            response = requests.post(
+                SEND_PHOTO_URL,
+                data=payload,
+                files={'photo': (image.name, BytesIO(file_content), 'image/jpeg')}
+            )
 
         else:
             # Отправка текстового сообщения с кнопками
