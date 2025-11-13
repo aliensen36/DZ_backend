@@ -30,7 +30,7 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     "backend_django_container", 
     'dzbackend-production.up.railway.app',
-    'DZ_backend.onrender.com',
+    'dz-backend.onrender.com',
     'https://frontend-tau-fawn-68.vercel.app',
     'frontend-tau-fawn-68.vercel.app',
 ] + os.getenv('ALLOWED_HOSTS', '').split()
