@@ -7,10 +7,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    # ✅ Переменные передаются в окружение
     env:
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
-      DJANGO_SETTINGS_MODULE: 'dzavod.settings'  # ✅ ПРАВИЛЬНО: ваша папка 'dzavod'
+      DJANGO_SETTINGS_MODULE: 'dzavod.settings'
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
