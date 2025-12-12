@@ -7,10 +7,10 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    # ✅ КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: передаем переменные в окружение
+    # ✅ Переменные передаются в окружение
     env:
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
-      DJANGO_SETTINGS_MODULE: 'backend.settings'  # ⚠️ ЗАМЕНИТЕ 'backend' на имя вашей папки с settings.py
+      DJANGO_SETTINGS_MODULE: 'dzavod.settings'  # ✅ ПРАВИЛЬНО: ваша папка 'dzavod'
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
