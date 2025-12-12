@@ -33,6 +33,7 @@ ALLOWED_HOSTS = [
     'dz-backend.onrender.com',
     'https://frontend-tau-fawn-68.vercel.app',
     'frontend-tau-fawn-68.vercel.app',
+    '89.111.141.219',
 ] + os.getenv('ALLOWED_HOSTS', '').split()
 
 # Основные доверенные origins (бек и фронт)
