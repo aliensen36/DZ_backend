@@ -28,19 +28,15 @@ jobs:
     runs-on: ubuntu-latest
     if: success()
     steps:
-    - uses: actions/checkout@v4
-    - name: Deploy to VPS
-      uses: appleboy/ssh-action@v0.1.7
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USERNAME }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          cd /var/www/dz_backend
-          source venv/bin/activate
-          git pull origin main
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
           pip install -r requirements.txt
-          python manage.py migrate
-          python manage.py collectstatic --noinput
-          # sudo systemctl restart my_django
-          echo "🚀 Деплой успешно завершён!"
+      - name: Check Django settings (без подключения к БД)
+        run: |
+          python manage.py check --deploy --fail-level WARNING
+    
