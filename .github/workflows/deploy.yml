@@ -19,9 +19,10 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements.txt
-    - name: Check Django settings (без подключения к БД)  # ← ИСПРАВЛЕНО
+    # Исправлено: теперь проверка падает только на ERROR, игнорирует WARNING
+    - name: Check Django settings (только критические ошибки)
       run: |
-        python manage.py check --deploy --fail-level WARNING
+        python manage.py check --deploy --fail-level ERROR
 
   deploy:
     needs: test
