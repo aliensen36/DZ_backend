@@ -32,7 +32,6 @@ ALLOWED_HOSTS = [
     'frontend-tau-fawn-68.vercel.app',
     '89.111.141.219',
     'aliensen.online',
-    'api.aliensen.online',
     'www.aliensen.online',
 ]
 # ] + os.getenv('ALLOWED_HOSTS', '').split()
