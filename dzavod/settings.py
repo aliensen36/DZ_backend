@@ -35,7 +35,8 @@ ALLOWED_HOSTS = [
     'aliensen.online',
     'api.aliensen.online',
     'www.aliensen.online',
-] + os.getenv('ALLOWED_HOSTS', '').split()
+]
+# ] + os.getenv('ALLOWED_HOSTS', '').split()
 
 # Основные доверенные origins (бек и фронт)
 BASE_CORS_ALLOWED_ORIGINS = [
