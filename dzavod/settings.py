@@ -39,23 +39,13 @@ ALLOWED_HOSTS = [
 # ] + os.getenv('ALLOWED_HOSTS', '').split()
 
 # Основные доверенные origins (бек и фронт)
-BASE_CORS_ALLOWED_ORIGINS = [
+CORS_ALLOWED_ORIGINS = [
     'https://frontend-tau-fawn-68.vercel.app',
-    'http://localhost:5173',  # Для тестирования фронта, потом убрать
+    'http://localhost:5173',
 ]
 
 # FRONTEND_BASE_URL = "https://design-zavod.tech"
 FRONTEND_BASE_URL = 'https://frontend-tau-fawn-68.vercel.app/'
-
-# Динамические origins из переменной окружения
-ENV_CORS_ALLOWED_ORIGINS = [
-    origin.strip()
-    for origin in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
-    if origin.strip()
-]
-
-# Объединенный список
-CORS_ALLOWED_ORIGINS = BASE_CORS_ALLOWED_ORIGINS + ENV_CORS_ALLOWED_ORIGINS
 
 CORS_ALLOW_HEADERS = ["authorization",
                       "content-type",
