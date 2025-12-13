@@ -1,3 +1,4 @@
+# server\gunicorn\gunicorn_dz_backend.service
 [Unit]
 Description=Gunicorn instance for dz_backend
 After=network.target
