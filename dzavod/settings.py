@@ -43,7 +43,7 @@ BASE_CORS_ALLOWED_ORIGINS = [
 ]
 
 # FRONTEND_BASE_URL = "https://design-zavod.tech"
-FRONTEND_BASE_URL = 'https://frontend-tau-fawn-68.vercel.app/',
+FRONTEND_BASE_URL = 'https://frontend-tau-fawn-68.vercel.app/'
 
 # Динамические origins из переменной окружения
 ENV_CORS_ALLOWED_ORIGINS = [
