@@ -29,7 +29,6 @@ ALLOWED_HOSTS = [
     '158.160.25.8',
     '127.0.0.1',
     "backend_django_container", 
-    'https://frontend-tau-fawn-68.vercel.app',
     'frontend-tau-fawn-68.vercel.app',
     '89.111.141.219',
     'aliensen.online',
