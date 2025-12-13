@@ -29,8 +29,6 @@ ALLOWED_HOSTS = [
     '158.160.25.8',
     '127.0.0.1',
     "backend_django_container", 
-    'dzbackend-production.up.railway.app',
-    'dz-backend.onrender.com',
     'https://frontend-tau-fawn-68.vercel.app',
     'frontend-tau-fawn-68.vercel.app',
     '89.111.141.219',
@@ -266,9 +264,10 @@ LOGGING = {
 
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://back.design-zavod.tech',
-    'https://design-zavod.tech'
+    'https://aliensen.online',
+    'https://www.aliensen.online',
 ]
+
 
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
 
