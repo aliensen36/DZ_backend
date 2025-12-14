@@ -1,0 +1,22 @@
+# deploy/systemd/gunicorn.service
+
+[Unit]
+Description=Gunicorn for dzavod Django project
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+
+WorkingDirectory=/var/www/dz_backend
+EnvironmentFile=/var/www/dz_backend/.env
+
+ExecStart=/var/www/dz_backend/venv/bin/gunicorn dzavod.wsgi:application \
+    --bind 127.0.0.1:8000 \
+    --workers 3 \
+    --timeout 60
+
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
