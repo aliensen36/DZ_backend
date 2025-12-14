@@ -5,24 +5,12 @@ from datetime import timedelta
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
 
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
 SECRET_KEY = os.getenv('SECRET_KEY')
-
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-
 BOT_API_KEY = os.getenv('BOT_API_KEY')
-
 TELEGRAM_BOT_USERNAME = os.getenv('TELEGRAM_BOT_USERNAME')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = True
 DEBUG = False
 
 ALLOWED_HOSTS = [
@@ -36,13 +24,11 @@ ALLOWED_HOSTS = [
     'www.aliensen.online',
 ]
 
-# Основные доверенные origins (бек и фронт)
 CORS_ALLOWED_ORIGINS = [
     'https://frontend-tau-fawn-68.vercel.app',
     'http://localhost:5173',
 ]
 
-# FRONTEND_BASE_URL = "https://design-zavod.tech"
 FRONTEND_BASE_URL = 'https://frontend-tau-fawn-68.vercel.app/'
 
 CORS_ALLOW_HEADERS = ["authorization",
@@ -120,10 +106,6 @@ DATABASES = {
     }
 }
 
-
-# Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -139,10 +121,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
-
 LANGUAGE_CODE = 'ru'
 
 LANGUAGES = [
@@ -151,25 +129,14 @@ LANGUAGES = [
 ]
 
 TIME_ZONE = 'Europe/Moscow'
-
 USE_I18N = True
-
 USE_TZ = True
-
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -224,12 +191,12 @@ LOGGING = {
             'class': 'logging.StreamHandler',
         },
     },
-    'root': {  # добавляем корневой логгер
+    'root': {
         'handlers': ['console'],
         'level': 'INFO',
     },
     'loggers': {
-        'django': {  # чтобы видеть общие логи Django
+        'django': {
             'handlers': ['console'],
             'level': 'INFO',
             'propagate': True,
@@ -239,9 +206,9 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
-        'SupabaseStorage': {  # добавляем наш кастомный логгер
+        'SupabaseStorage': {
             'handlers': ['console'],
-            'level': 'DEBUG',  # можно временно поставить DEBUG для детальной информации
+            'level': 'DEBUG',
             'propagate': True,
         },
     },
@@ -252,14 +219,12 @@ CSRF_TRUSTED_ORIGINS = [
     'https://www.aliensen.online',
     'https://frontend-tau-fawn-68.vercel.app',
 ]
-
 CSRF_USE_SESSIONS = False
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
-
 
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
 
@@ -289,5 +254,4 @@ STORAGES = {
 }
 
 # URL для медиафайлов
-# MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/'
 MEDIA_URL = 'https://nnpvsgtcvnyrxrbtzumz.supabase.co/storage/v1/object/public/media/'
