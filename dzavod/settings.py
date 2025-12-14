@@ -247,12 +247,12 @@ LOGGING = {
     },
 }
 
-
-
 CSRF_TRUSTED_ORIGINS = [
     'https://aliensen.online',
     'https://www.aliensen.online',
+    'https://frontend-tau-fawn-68.vercel.app',
 ]
+
 CSRF_USE_SESSIONS = False
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SECURE = True
